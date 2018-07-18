@@ -1,7 +1,7 @@
-@@REPO_NAME@@
-=============
+Holdit
+======
 
-@@SHORT_DESCRIPTION@@
+_Hold it_ is a small application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
 
 *Authors*:      [Michael Hucka](http://github.com/mhucka)<br>
 *Repository*:   [https://github.com/caltechlibrary/urlup](https://github.com/caltechlibrary/@@REPO@@)<br>
