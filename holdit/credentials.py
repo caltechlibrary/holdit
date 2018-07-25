@@ -25,6 +25,35 @@ if sys.platform.startswith('win'):
 
 # Credentials/keyring functions
 # .............................................................................
+
+def credentials(service, display_name, user=None, pswd=None, host=-1, port=-1,
+                default_host=None, default_port=None):
+    '''Asks the user for credentials.  If 'service' is provided, first gets the
+    credentials for the system keyring under the name of the 'service', and
+    only asks the user for missing information. Returns a 4-tuple:
+        user name, password, host, port
+    This doesn't save any information; it only queries the keyring and/or user.
+    '''
+    (s_user, s_pswd, s_host, s_port) = (None, None, None, None)
+    if service:
+        # If we're given a service, retrieve the stored (if any) for defaults.
+        (s_user, s_pswd, s_host, s_port) = keyring_credentials(service)
+
+    if host is not -1 and not host:
+        host = s_host or input("{} host (default: {}): ".format(display_name,
+                                                                default_host))
+        host = host or default_host
+    if port is not -1 and not port:
+        port = s_port or input("{} port (default: {}): ".format(display_name,
+                                                                default_port))
+        port = port or default_port
+    if not user:
+        user = s_user or input("{} user name: ".format(display_name))
+    if not pswd:
+        pswd = s_pswd or password('{} password: '.format(display_name))
+
+    return (user, pswd, host, port)
+
 # Explanation about the weird way this is done: the Python keyring module
 # only offers a single function for setting a value; ostensibly, this is
 # intended to store a password associated with an identifier (a user name),
@@ -48,7 +77,7 @@ if sys.platform.startswith('win'):
 #  used as the actual value stored.  The individual values are separated by a
 #  character that is unlikely to be part of any user-typed value.
 
-def get_credentials(service, user=None):
+def keyring_credentials(service, user=None):
     '''Looks up the user's credentials for the given 'service' using the
     keyring/keychain facility on this computer.  If 'user' is None, this uses
     the fake user named "credentials".  The latter makes it possible to access a
@@ -58,10 +87,10 @@ def get_credentials(service, user=None):
     if sys.platform.startswith('win'):
         keyring.set_keyring(WinVaultKeyring())
     value = keyring.get_password(service, user if user else 'credentials')
-    return _decode(value) if value else (None, None, None, None)
+    return _decoded(value) if value else (None, None, None, None)
 
 
-def save_credentials(service, user, pswd, host=None, port=None):
+def save_keyring_credentials(service, user, pswd, host=None, port=None):
     '''Saves the user, password, host and port info for 'service'.'''
     user = user if user else ''
     pswd = pswd if pswd else ''
@@ -69,32 +98,7 @@ def save_credentials(service, user, pswd, host=None, port=None):
     port = port if port else ''
     if sys.platform.startswith('win'):
         keyring.set_keyring(WinVaultKeyring())
-    keyring.set_password(service, 'credentials', _encode(user, pswd, host, port))
-
-
-def obtain_credentials(service, display_name,
-                       user=None, pswd=None, host=-1, port=-1,
-                       default_host=None, default_port=None):
-    '''As the user for credentials for 'service'.'''
-    (s_user, s_pswd, s_host, s_port) = (None, None, None, None)
-    if service:
-        # If we're given a service, retrieve the stored (if any) for defaults.
-        (s_user, s_pswd, s_host, s_port) = get_credentials(service)
-
-    if host is not -1 and not host:
-        host = s_host or input("{} host (default: {}): ".format(display_name,
-                                                                default_host))
-        host = host or default_host
-    if port is not -1 and not port:
-        port = s_port or input("{} port (default: {}): ".format(display_name,
-                                                                default_port))
-        port = port or default_port
-    if not user:
-        user = s_user or input("{} user name: ".format(display_name))
-    if not pswd:
-        pswd = s_pswd or getpassword('{} password: '.format(display_name))
-
-    return (user, pswd, host, port)
+    keyring.set_password(service, 'credentials', _encoded(user, pswd, host, port))
 
 
 _sep = ''
@@ -104,15 +108,15 @@ very unlikely to be part of a legitimate string value typed by user at a
 shell prompt, because control-c is normally used to interrupt programs.
 '''
 
-def _encode(user, pswd, host, port):
+def _encoded(user, pswd, host, port):
     return '{}{}{}{}{}{}{}'.format(user, _sep, pswd, _sep, host, _sep, port)
 
 
-def _decode(value_string):
+def _decoded(value_string):
     return tuple(value_string.split(_sep))
 
 
-def getpassword(prompt):
+def password(prompt):
     # If it's a tty, use the version that doesn't echo the password.
     if sys.stdin.isatty():
         return getpass.getpass(prompt)
