@@ -27,6 +27,28 @@ except ImportError:
 import holdit
 from holdit.gui import credentials_from_gui
 from holdit.messages import color, msg
+from holdit.generate import generate_hold_list
+from holdit.credentials import password, credentials
+from holdit.credentials import keyring_credentials, save_keyring_credentials
+
+# NOTE: to turn on debugging, make sure python -O was *not* used to start
+# python, then set the logging level to DEBUG *before* loading this module.
+# Conversely, to optimize out all the debugging code, use python -O or -OO
+# and everything inside "if __debug__" blocks will be entirely compiled out.
+if __debug__:
+    import logging
+    logging.basicConfig(level = logging.INFO)
+    logger = logging.getLogger('holdit')
+    def log(s, *other_args): logger.debug('holdit: ' + s.format(*other_args))
+
+
+# Global constants.
+# .............................................................................
+
+_KEYRING = "org.caltechlibrary.holdit"
+'''
+The name of the keyring used to store Caltech access credentials, if any.
+'''
 
 
 # Main program.
@@ -85,19 +107,10 @@ def main(user = 'U', pswd = 'P', no_color=False, no_gui=False,
     try:
         if use_gui and not any([user, pswd, reset, no_keyring]):
             user, pswd, cancel = credentials_from_gui()
-        else:
-            if not all([user, pswd]):
-                if use_keyring:
-                    user, pswd = credentials_from_keyring(user, pswd, reset)
-                else:
-                    # If we're not using the keyring, then we must be given the
-                    # credentials on the command line or we can't go on.
-                    raise SystemExit(color('Need login name and password. ' + get_help,
-                                           'error', colorize))
-        if cancel:
-            if no_gui:
-                msg('Quitting.', 'warn', colorize)
-            sys.exit()
+            if cancel:
+                sys.exit()
+        elif not all([user, pswd]) or reset or no_keyring:
+            user, pswd = credentials_from_keyring(user, pswd, use_keyring, reset)
         generate_hold_list(user, pswd)
     except KeyboardInterrupt:
         if no_gui:
@@ -121,6 +134,27 @@ def network_available():
         return True
     except requests.ConnectionError:
         return False
+
+
+def credentials_from_keyring(user, pswd, use_keyring, reset):
+    if not user or not pswd or reset:
+        if use_keyring and not reset:
+            if __debug__: log('Getting credentials from keyring')
+            user, pswd, _, _ = credentials(_KEYRING, "Caltech access login", user, pswd)
+        else:
+            if use_keyring:
+                if __debug__: log('Keyring disabled')
+            if reset:
+                if __debug__: log('Reset invoked')
+            user = input('Caltech access login: ')
+            pswd = password('Password for "{}": '.format(user))
+    if use_keyring:
+        # Save the credentials if they're different from what's currently saved.
+        s_user, s_pswd, _, _ = keyring_credentials(_KEYRING)
+        if s_user != user or s_pswd != pswd:
+            if __debug__: log('Saving credentials to keyring')
+            save_keyring_credentials(_KEYRING, user, pswd)
+    return user, pswd
 
 
 # Main entry point.
