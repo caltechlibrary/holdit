@@ -66,7 +66,29 @@ The name of the keyring used to store Caltech access credentials, if any.
 
 def main(user = 'U', pswd = 'P', no_color=False, no_gui=False,
          reset=False, no_keyring=False, version=False):
-    '''Generate a list of current hold requests.'''
+    '''Generate a list of current hold requests.
+
+By default, Holdit uses a GUI dialog to get the user's Caltech access login
+name and password.  If the -G option is given (/G on Windows), it will not
+use a GUI dialog, and will instead use the operating system's
+keyring/keychain functionality to get a user name and password.  If the
+information does not exist from a previous run of Holdit, it will query the
+user interactively for the user name and password, and (unless the -X or /X
+argument is given) store them in the user's keyring/keychain so that it does
+not have to ask again in the future.  It is also possible to supply the
+information directly on the command line using the -u and -p options (or /u
+and /p on Windows), but this is discouraged because it is insecure on
+multiuser computer systems.
+
+To reset the user name and password (e.g., if a mistake was made the last
+time and the wrong credentials were stored in the keyring/keychain system),
+add the -R (or /R on Windows) command-line argument to a command.  This
+argument will make Holdit query for the user name and password again even if
+an entry already exists in the keyring or keychain.
+
+If given the -V option (/V on Windows), this program will print version
+information and exit without doing anything else.
+'''
 
     # Our defaults are to do things like color the output, which means the
     # command line flags make more sense as negated values (e.g., "nocolor").
@@ -130,7 +152,9 @@ if sys.platform.startswith('win'):
 # ......................................................................
 
 def network_available():
-    '''Return True if it appears we have a network connection, False if not.'''
+
+    '''Return True if it appears we have a network connection, False if
+    not.'''
     try:
         r = requests.get("https://www.caltech.edu")
         return True
