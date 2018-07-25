@@ -55,13 +55,13 @@ The name of the keyring used to store Caltech access credentials, if any.
 # ......................................................................
 
 @plac.annotations(
-    pswd       = ('Shibboleth user password',                        'option', 'p'),
-    user       = ('Shibboleth user name',                            'option', 'u'),
+    pswd       = ('Caltech access user password',                    'option', 'p'),
+    user       = ('Caltech access user name',                        'option', 'u'),
     no_color   = ('do not color-code terminal output (default: do)', 'flag',   'C'),
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
-    reset      = ('reset proxy user name and password',              'flag',   'R'),
+    reset      = ('reset stored user name and password',             'flag',   'R'),
     version    = ('print version info and exit',                     'flag',   'V'),
-    no_keyring = ('do not use a keyring',                            'flag',   'X'),
+    no_keyring = ('do not use a keyring (default: do)',              'flag',   'X'),
 )
 
 def main(user = 'U', pswd = 'P', no_color=False, no_gui=False,
@@ -106,8 +106,10 @@ def main(user = 'U', pswd = 'P', no_color=False, no_gui=False,
     # options that implicate non-gui actions.
     try:
         if use_gui and not any([user, pswd, reset, no_keyring]):
+            if __debug__: log('Invoking GUI')
             user, pswd, cancel = credentials_from_gui()
             if cancel:
+                if __debug__: log('User initiated quit from within GUI')
                 sys.exit()
         elif not all([user, pswd]) or reset or no_keyring:
             user, pswd = credentials_from_keyring(user, pswd, use_keyring, reset)
@@ -133,6 +135,7 @@ def network_available():
         r = requests.get("https://www.caltech.edu")
         return True
     except requests.ConnectionError:
+        if __debug__: log('Could not connect to https://www.caltech.edu')
         return False
 
 
