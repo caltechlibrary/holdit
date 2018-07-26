@@ -18,15 +18,19 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
         self.SetSize((355, 175))
-        self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit: generate a list of hold requests", style=wx.ALIGN_CENTER)
+        self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit: generate a list of hold requests", style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
-        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style=wx.ALIGN_RIGHT)
-        self.login = wx.TextCtrl(panel, wx.ID_ANY, "", style=wx.TE_DONTWRAP)
-        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style=wx.ALIGN_RIGHT)
-        self.password = wx.TextCtrl(panel, wx.ID_ANY, "", style=wx.TE_DONTWRAP | wx.TE_PASSWORD)
+        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
+        self.login = wx.TextCtrl(panel, wx.ID_ANY, "", style = wx.TE_PROCESS_ENTER)
+        self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
+        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style = wx.ALIGN_RIGHT)
+        self.password = wx.TextCtrl(panel, wx.ID_ANY, "", style = wx.TE_PROCESS_ENTER)
+        self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.bottom_line = wx.StaticLine(panel, wx.ID_ANY)
         self.cancel_button = wx.Button(panel, wx.ID_ANY, "Cancel")
+        self.cancel_button.Bind(wx.EVT_KEY_DOWN, self.on_escape)
         self.ok_button = wx.Button(panel, wx.ID_ANY, "OK")
+        self.ok_button.Bind(wx.EVT_KEY_DOWN, self.on_ok_enter_key)
 
         self.__set_properties()
         self.__do_layout()
@@ -106,6 +110,41 @@ class MainFrame(wx.Frame):
             self.Destroy()
         else:
             event.StopPropagation()
+
+
+    def on_escape(self, event):
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:
+            self.on_cancel(event)
+        else:
+            event.Skip()
+
+
+    def on_ok_enter_key(self, event):
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_SPACE]:
+            self.on_ok(event)
+        elif keycode == wx.WXK_ESCAPE:
+            self.on_cancel(event)
+        else:
+            event.EventObject.Navigate()
+
+
+    def on_enter_or_tab(self, event):
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER]:
+            # If focus is on the login line, move to password.
+            # If focus is not, then it's on password, so we move to the button.
+            if wx.Window.FindFocus() is self.login:
+                event.EventObject.Navigate()
+            else:
+                self.ok_button.SetFocus()
+        elif keycode == wx.WXK_TAB:
+            event.EventObject.Navigate()
+        elif keycode == wx.WXK_ESCAPE:
+            self.on_cancel(event)
+        else:
+            event.Skip()
 
 
     def values_valid(self):
