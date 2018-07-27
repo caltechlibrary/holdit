@@ -58,7 +58,7 @@ class AccessHandlerGUI():
 
     def _credentials_from_gui(self, user, pswd):
         gui = HolditGUI(0)
-        gui.init_values(user, pswd)
+        gui.initialize_values(user, pswd)
         gui.MainLoop()
         return gui.final_values()
 
@@ -126,10 +126,10 @@ class HolditGUI(wx.App):
         return True
 
 
-    def init_values(self, user, password):
+    def initialize_values(self, user, password):
         self.values.user = user
         self.values.password = password
-        self.setsizeframe.init_values(self.values)
+        self.setsizeframe.initialize_values(self.values)
 
 
     def final_values(self):
@@ -149,14 +149,17 @@ class MainFrame(wx.Frame):
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
+        self.login.Bind(wx.EVT_TEXT, self.on_text)
         self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style = wx.ALIGN_RIGHT)
         self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
+        self.password.Bind(wx.EVT_TEXT, self.on_text)
         self.bottom_line = wx.StaticLine(panel, wx.ID_ANY)
         self.cancel_button = wx.Button(panel, wx.ID_ANY, "Cancel")
         self.cancel_button.Bind(wx.EVT_KEY_DOWN, self.on_escape)
         self.ok_button = wx.Button(panel, wx.ID_ANY, "OK")
         self.ok_button.Bind(wx.EVT_KEY_DOWN, self.on_ok_enter_key)
+        self.ok_button.Disable()
 
         self.__set_properties()
         self.__do_layout()
@@ -211,21 +214,31 @@ class MainFrame(wx.Frame):
         self.Centre()
 
 
-    def init_values(self, values):
+    def initialize_values(self, values):
         self.values = values
-        if self.values.user:
-            self.login.AppendText(self.values.user)
+        if values.user:
+            self.login.AppendText(values.user)
             self.login.Refresh()
-        if self.values.password:
-            self.password.AppendText(self.values.password)
+        if values.password:
+            self.password.AppendText(values.password)
             self.password.Refresh()
 
 
+    def inputs_nonempty(self):
+        user = self.login.GetValue()
+        password = self.password.GetValue()
+        if user.strip() and password.strip():
+            return True
+        return False
+
+
     def on_ok(self, event):
-        self.values.cancel = False
-        self.values.user = self.login.GetValue()
-        self.values.password = self.password.GetValue()
-        if self.values_valid():
+        '''Stores the current values and destroys the dialog.'''
+
+        if self.inputs_nonempty():
+            self.values.cancel = False
+            self.values.user = self.login.GetValue()
+            self.values.password = self.password.GetValue()
             self.Destroy()
         else:
             self.complain_incomplete_values()
@@ -242,6 +255,12 @@ class MainFrame(wx.Frame):
             self.Destroy()
         else:
             event.StopPropagation()
+
+
+    def on_text(self, event):
+        if self.login.GetValue() and self.password.GetValue():
+            self.ok_button.Enable()
+            self.ok_button.SetDefault()
 
 
     def on_escape(self, event):
@@ -265,24 +284,18 @@ class MainFrame(wx.Frame):
     def on_enter_or_tab(self, event):
         keycode = event.GetKeyCode()
         if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER]:
+            # If the ok button is enabled, we interpret return/enter as "done".
+            if self.ok_button.IsEnabled():
+                self.on_ok(event)
             # If focus is on the login line, move to password.
-            # If focus is not, then it's on password, so we move to the button.
             if wx.Window.FindFocus() is self.login:
                 event.EventObject.Navigate()
-            else:
-                self.ok_button.SetFocus()
         elif keycode == wx.WXK_TAB:
             event.EventObject.Navigate()
         elif keycode == wx.WXK_ESCAPE:
             self.on_cancel(event)
         else:
             event.Skip()
-
-
-    def values_valid(self):
-        if not self.values.user.strip() or not self.values.password.strip():
-            return False
-        return True
 
 
     def complain_incomplete_values(self):
