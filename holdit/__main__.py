@@ -25,7 +25,6 @@ except ImportError:
     pass
 
 import holdit
-from holdit.gui import credentials_from_gui
 from holdit.messages import color, msg
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
 from holdit.exceptions import *
