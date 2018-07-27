@@ -1,13 +1,139 @@
 '''
-gui.py: GUI for Holdit
+access.py: code to deal with getting user access credentials
 '''
 
 import wx
 
-class Values():
+from holdit.credentials import password, credentials
+from holdit.credentials import keyring_credentials, save_keyring_credentials
+from holdit.exceptions import *
+
+# Note: to turn on debugging, make sure python -O was *not* used to start
+# python, then set the logging level to DEBUG *before* loading this module.
+# Conversely, to optimize out all the debugging code, use python -O or -OO
+# and everything inside "if __debug__" blocks will be entirely compiled out.
+if __debug__:
+    import logging
+    logging.basicConfig(level = logging.INFO)
+    logger = logging.getLogger('holdit')
+    def log(s, *other_args): logger.debug('holdit: ' + s.format(*other_args))
+
+
+# Global constants.
+# .............................................................................
+
+_KEYRING = "org.caltechlibrary.holdit"
+'''
+The name of the keyring used to store Caltech access credentials, if any.
+'''
+
+
+# Exported interfaces to different approaches to getting credentials.
+# .............................................................................
+
+class AccessHandlerGUI():
+    '''Use a GUI to ask the user for credentials.'''
+    user = None
+    pswd = None
+
+
+    def __init__(self, user = None, pswd = None):
+        '''Initialize internal data with user and password if available.'''
+        self.user = user
+        self.pswd = pswd
+
+
+    def name_and_password(self):
+        '''Returns a tuple of user, password.'''
+        user = self.user
+        pswd = self.pswd
+        if not all([user, pswd]):
+            if __debug__: log('Invoking GUI')
+            user, pswd, cancel = self._credentials_from_gui(user, pswd)
+            if cancel:
+                if __debug__: log('User initiated quit from within GUI')
+                raise UserCancel
+        return user, pswd
+
+
+    def _credentials_from_gui(self, user, pswd):
+        gui = HolditGUI(0)
+        gui.init_values(user, pswd)
+        gui.MainLoop()
+        return gui.final_values()
+
+
+class AccessHandlerCLI():
+    user = None
+    pswd = None
+    reset = False
+    use_keyring = False
+
+
+    def __init__(self, user = None, pswd = None, use_keyring = True, reset = False):
+        '''Initialize internal data with user and password if available.'''
+        self.user = user
+        self.pswd = pswd
+        self.use_gui = use_gui
+        self.use_keyring = use_keyring
+        self.reset = reset
+
+
+    def name_and_password(self):
+        '''Returns a tuple of user, password.'''
+        user = self.user
+        pswd = self.pswd
+        if not all([user, pswd]) or self.reset or self.no_keyring:
+            if self.use_keyring and not self.reset:
+                if __debug__: log('Getting credentials from keyring')
+                user, pswd, _, _ = credentials(_KEYRING, "Caltech access login",
+                                               user, pswd)
+            else:
+                if not self.use_keyring:
+                    if __debug__: log('Keyring disabled')
+                if self.reset:
+                    if __debug__: log('Reset invoked')
+                user = input('Caltech access login: ')
+                pswd = password('Password for "{}": '.format(user))
+            if self.use_keyring:
+                # Save the credentials if they're different.
+                s_user, s_pswd, _, _ = keyring_credentials(_KEYRING)
+                if s_user != user or s_pswd != pswd:
+                    if __debug__: log('Saving credentials to keyring')
+                    save_keyring_credentials(_KEYRING, user, pswd)
+        return user, pswd
+
+
+# Internal implementation classes for login GUI.
+# .............................................................................
+
+class UserInputValues():
+    '''Utility class to store and communicate values from GUI interactions.'''
     user = None
     password = None
     cancel = False
+
+
+class HolditGUI(wx.App):
+    '''Top level class for creating and interacting with the login GUI.'''
+    values = UserInputValues()
+
+
+    def OnInit(self):
+        self.setsizeframe = MainFrame(None, wx.ID_ANY, "")
+        self.SetTopWindow(self.setsizeframe)
+        self.setsizeframe.Show()
+        return True
+
+
+    def init_values(self, user, password):
+        self.values.user = user
+        self.values.password = password
+        self.setsizeframe.init_values(self.values)
+
+
+    def final_values(self):
+        return self.values.user, self.values.password, self.values.cancel
 
 
 class MainFrame(wx.Frame):
@@ -21,10 +147,10 @@ class MainFrame(wx.Frame):
         self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit: generate a list of hold requests", style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
-        self.login = wx.TextCtrl(panel, wx.ID_ANY, "", style = wx.TE_PROCESS_ENTER)
+        self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style = wx.ALIGN_RIGHT)
-        self.password = wx.TextCtrl(panel, wx.ID_ANY, "", style = wx.TE_PROCESS_ENTER)
+        self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.bottom_line = wx.StaticLine(panel, wx.ID_ANY)
         self.cancel_button = wx.Button(panel, wx.ID_ANY, "Cancel")
@@ -87,6 +213,12 @@ class MainFrame(wx.Frame):
 
     def init_values(self, values):
         self.values = values
+        if self.values.user:
+            self.login.AppendText(self.values.user)
+            self.login.Refresh()
+        if self.values.password:
+            self.password.AppendText(self.values.password)
+            self.password.Refresh()
 
 
     def on_ok(self, event):
@@ -162,24 +294,3 @@ class MainFrame(wx.Frame):
         if (response == wx.ID_YES):
             self.values.cancel = True
             self.Destroy()
-
-
-class HolditApp(wx.App):
-    values = Values()
-
-    def OnInit(self):
-        self.setsizeframe = MainFrame(None, wx.ID_ANY, "")
-        self.SetTopWindow(self.setsizeframe)
-        self.setsizeframe.init_values(self.values)
-        self.setsizeframe.Show()
-        return True
-
-    def final_values(self):
-        return self.values.user, self.values.password, self.values.cancel
-
-# end of class HolditApp
-
-def credentials_from_gui():
-    gui = HolditApp(0)
-    gui.MainLoop()
-    return gui.final_values()
