@@ -27,11 +27,10 @@ except ImportError:
 import holdit
 from holdit.gui import credentials_from_gui
 from holdit.messages import color, msg
-from holdit.generate import generate_hold_list
-from holdit.credentials import password, credentials
-from holdit.credentials import keyring_credentials, save_keyring_credentials
+from holdit.access import AccessHandlerGUI, AccessHandlerCLI
+from holdit.exceptions import *
 
-# NOTE: to turn on debugging, make sure python -O was *not* used to start
+# Note: to turn on debugging, make sure python -O was *not* used to start
 # python, then set the logging level to DEBUG *before* loading this module.
 # Conversely, to optimize out all the debugging code, use python -O or -OO
 # and everything inside "if __debug__" blocks will be entirely compiled out.
@@ -42,15 +41,6 @@ if __debug__:
     def log(s, *other_args): logger.debug('holdit: ' + s.format(*other_args))
 
 
-# Global constants.
-# .............................................................................
-
-_KEYRING = "org.caltechlibrary.holdit"
-'''
-The name of the keyring used to store Caltech access credentials, if any.
-'''
-
-
 # Main program.
 # ......................................................................
 
@@ -59,13 +49,13 @@ The name of the keyring used to store Caltech access credentials, if any.
     user       = ('Caltech access user name',                        'option', 'u'),
     no_color   = ('do not color-code terminal output (default: do)', 'flag',   'C'),
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
-    reset      = ('reset stored user name and password',             'flag',   'R'),
+    no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
+    reset      = ('reset keyring stored user name and password',     'flag',   'R'),
     version    = ('print version info and exit',                     'flag',   'V'),
-    no_keyring = ('do not use a keyring (default: do)',              'flag',   'X'),
 )
 
-def main(user = 'U', pswd = 'P', no_color=False, no_gui=False,
-         reset=False, no_keyring=False, version=False):
+def main(user = 'U', pswd = 'P', no_color=False, no_gui=False, no_keyring=False,
+         reset=False, version=False):
     '''Generate a list of current hold requests.
 
 By default, Holdit uses a GUI dialog to get the user's Caltech access login
@@ -73,7 +63,7 @@ name and password.  If the -G option is given (/G on Windows), it will not
 use a GUI dialog, and will instead use the operating system's
 keyring/keychain functionality to get a user name and password.  If the
 information does not exist from a previous run of Holdit, it will query the
-user interactively for the user name and password, and (unless the -X or /X
+user interactively for the user name and password, and (unless the -K or /K
 argument is given) store them in the user's keyring/keychain so that it does
 not have to ask again in the future.  It is also possible to supply the
 information directly on the command line using the -u and -p options (or /u
@@ -122,21 +112,22 @@ information and exit without doing anything else.
     # General sanity checks.
     if not network_available():
         raise SystemExit(color('No network', 'error', colorize))
+    if use_gui and no_keyring:
+        msg('Warning: keyring flag ignored when using GUI', 'warn', colorize)
+    if use_gui and reset:
+        msg('Warning: reset flag ignored when using GUI', 'warn', colorize)
 
     # If the user left the gui option as default (meaning, use gui), we may
     # still have to resort to non-gui operation if the command line contained
     # options that implicate non-gui actions.
     try:
-        if use_gui and not any([user, pswd, reset, no_keyring]):
-            if __debug__: log('Invoking GUI')
-            user, pswd, cancel = credentials_from_gui()
-            if cancel:
-                if __debug__: log('User initiated quit from within GUI')
-                sys.exit()
-        elif not all([user, pswd]) or reset or no_keyring:
-            user, pswd = credentials_from_keyring(user, pswd, use_keyring, reset)
-        generate_hold_list(user, pswd)
-    except KeyboardInterrupt:
+        if use_gui:
+            credentials_handler = AccessHandlerGUI(user, pswd)
+        else:
+            credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
+        #generate_hold_list(credentials_handler)
+        credentials_handler.name_and_password()
+    except (KeyboardInterrupt, UserCancel):
         if no_gui:
             msg('Quitting.', 'warn', colorize)
         sys.exit()
@@ -152,36 +143,13 @@ if sys.platform.startswith('win'):
 # ......................................................................
 
 def network_available():
-
-    '''Return True if it appears we have a network connection, False if
-    not.'''
+    '''Return True if it appears we have a network connection, False if not.'''
     try:
         r = requests.get("https://www.caltech.edu")
         return True
     except requests.ConnectionError:
         if __debug__: log('Could not connect to https://www.caltech.edu')
         return False
-
-
-def credentials_from_keyring(user, pswd, use_keyring, reset):
-    if not user or not pswd or reset:
-        if use_keyring and not reset:
-            if __debug__: log('Getting credentials from keyring')
-            user, pswd, _, _ = credentials(_KEYRING, "Caltech access login", user, pswd)
-        else:
-            if use_keyring:
-                if __debug__: log('Keyring disabled')
-            if reset:
-                if __debug__: log('Reset invoked')
-            user = input('Caltech access login: ')
-            pswd = password('Password for "{}": '.format(user))
-    if use_keyring:
-        # Save the credentials if they're different from what's currently saved.
-        s_user, s_pswd, _, _ = keyring_credentials(_KEYRING)
-        if s_user != user or s_pswd != pswd:
-            if __debug__: log('Saving credentials to keyring')
-            save_keyring_credentials(_KEYRING, user, pswd)
-    return user, pswd
 
 
 # Main entry point.
