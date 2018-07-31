@@ -54,17 +54,21 @@ class MessageHandlerGUI():
         pass
 
 
-    def msg(self, text, details = '', severity = 'info'):
+    def msg(self, text, details = '', severity = 'error'):
         # When running with a GUI, we only bring up error dialogs.
-        if 'error' not in severity:
+        if 'error' not in severity and 'fatal' not in severity:
             return
-        short = text + '\n\nWould you like to try to continue?\n(Click "no" to quit.)'
         app = wx.App()
         frame = wx.Frame(None)
         frame.Center()
-        dlg = wx.MessageDialog(frame, message = short,
-                               caption = "Holdit encountered a problem",
-                               style = wx.YES_NO | wx.YES_DEFAULT | wx.HELP | wx.ICON_)
+        if 'fatal' in severity:
+            short = text
+            style = wx.OK | wx.HELP | wx.ICON_ERROR
+        else:
+            short = text + '\n\nWould you like to try to continue?\n(Click "no" to quit now.)'
+            style = wx.YES_NO | wx.YES_DEFAULT | wx.HELP | wx.ICON_EXCLAMATION
+        dlg = wx.MessageDialog(frame, message = short, style = style,
+                               caption = "Holdit encountered a problem")
         clicked = dlg.ShowModal()
         if clicked == wx.ID_HELP:
             body = ("Holdit has encountered an error:\n"
@@ -81,7 +85,7 @@ class MessageHandlerGUI():
             info.ShowModal()
             info.Destroy()
             frame.Destroy()
-        elif clicked == wx.ID_NO:
+        elif clicked in [wx.ID_NO, wx.ID_OK]:
             dlg.Destroy()
             frame.Destroy()
             raise UserCancelled
