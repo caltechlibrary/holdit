@@ -52,7 +52,7 @@ class AccessHandlerGUI():
             user, pswd, cancel = self._credentials_from_gui(user, pswd)
             if cancel:
                 if __debug__: log('User initiated quit from within GUI')
-                raise UserCancel
+                raise UserCancelled
         return user, pswd
 
 
@@ -74,7 +74,6 @@ class AccessHandlerCLI():
         '''Initialize internal data with user and password if available.'''
         self.user = user
         self.pswd = pswd
-        self.use_gui = use_gui
         self.use_keyring = use_keyring
         self.reset = reset
 
@@ -159,6 +158,7 @@ class MainFrame(wx.Frame):
         self.cancel_button.Bind(wx.EVT_KEY_DOWN, self.on_escape)
         self.ok_button = wx.Button(panel, wx.ID_ANY, "OK")
         self.ok_button.Bind(wx.EVT_KEY_DOWN, self.on_ok_enter_key)
+        self.ok_button.SetDefault()
         self.ok_button.Disable()
 
         self.__set_properties()
@@ -260,7 +260,8 @@ class MainFrame(wx.Frame):
     def on_text(self, event):
         if self.login.GetValue() and self.password.GetValue():
             self.ok_button.Enable()
-            self.ok_button.SetDefault()
+        else:
+            self.ok_button.Disable()
 
 
     def on_escape(self, event):
