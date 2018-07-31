@@ -17,27 +17,14 @@ file "LICENSE" for more information.
 import os
 import os.path as path
 import plac
-import requests
 import sys
-try:
-    from termcolor import colored
-except ImportError:
-    pass
 
 import holdit
-from holdit.messages import color, msg
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
+from holdit.generate import generate_hold_list
+from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
+from holdit.network import network_available
 from holdit.exceptions import *
-
-# Note: to turn on debugging, make sure python -O was *not* used to start
-# python, then set the logging level to DEBUG *before* loading this module.
-# Conversely, to optimize out all the debugging code, use python -O or -OO
-# and everything inside "if __debug__" blocks will be entirely compiled out.
-if __debug__:
-    import logging
-    logging.basicConfig(level = logging.INFO)
-    logger = logging.getLogger('holdit')
-    def log(s, *other_args): logger.debug('holdit: ' + s.format(*other_args))
 
 
 # Main program.
@@ -80,14 +67,11 @@ information and exit without doing anything else.
 '''
 
     # Our defaults are to do things like color the output, which means the
-    # command line flags make more sense as negated values (e.g., "nocolor").
-    # Dealing with negated variables is confusing, so turn them around here.
-    colorize = 'termcolor' in sys.modules and not no_color
+    # command line flags make more sense as negated values (e.g., "no-color").
+    # However, dealing with negated variables in our code is confusing, so:
+    use_color   = not no_color
     use_keyring = not no_keyring
-    use_gui = not no_gui
-
-    # Some user interactions change depending on the current platform.
-    on_windows = sys.platform.startswith('win')
+    use_gui     = not no_gui
 
     # We use default values that provide more intuitive help text printed by
     # plac.  Rewrite the values to things we actually use.
@@ -95,10 +79,6 @@ information and exit without doing anything else.
         user = None
     if pswd == 'P':
         pswd = None
-    if on_windows:
-        get_help = '(Hint: use /h to get help.)'
-    else:
-        get_help = '(Hint: use -h to get help.)'
 
     # Process the version argument first, because it causes an early exit.
     if version:
@@ -108,13 +88,13 @@ information and exit without doing anything else.
         print('License: {}'.format(holdit.__license__))
         sys.exit()
 
-    # General sanity checks.
+    # Perform general sanity checks.
     if not network_available():
-        raise SystemExit(color('No network', 'error', colorize))
+        raise SystemExit(color('No network', 'error', use_color))
     if use_gui and no_keyring:
-        msg('Warning: keyring flag ignored when using GUI', 'warn', colorize)
+        msg('Warning: keyring flag ignored when using GUI', 'warn', use_color)
     if use_gui and reset:
-        msg('Warning: reset flag ignored when using GUI', 'warn', colorize)
+        msg('Warning: reset flag ignored when using GUI', 'warn', use_color)
 
     # If the user left the gui option as default (meaning, use gui), we may
     # still have to resort to non-gui operation if the command line contained
@@ -122,33 +102,23 @@ information and exit without doing anything else.
     try:
         if use_gui:
             credentials_handler = AccessHandlerGUI(user, pswd)
+            message_handler = MessageHandlerGUI()
         else:
             credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
-        #generate_hold_list(credentials_handler)
-        credentials_handler.name_and_password()
-    except (KeyboardInterrupt, UserCancel):
+            message_handler = MessageHandlerCLI(use_color)
+        generate_hold_list(credentials_handler, message_handler)
+    except (KeyboardInterrupt, UserCancelled):
         if no_gui:
-            msg('Quitting.', 'warn', colorize)
+            msg('Quitting.', 'warn', use_color)
         sys.exit()
+    if no_gui:
+        msg('Done.', 'info', use_color)
 
-# If this is windows, we want the command-line args to use slash intead
-# of hyphen.
+
+# On windows, we want the command-line args to use slash intead of hyphen.
 
 if sys.platform.startswith('win'):
     main.prefix_chars = '/'
-
-
-# Miscellaneous utilities.
-# ......................................................................
-
-def network_available():
-    '''Return True if it appears we have a network connection, False if not.'''
-    try:
-        r = requests.get("https://www.caltech.edu")
-        return True
-    except requests.ConnectionError:
-        if __debug__: log('Could not connect to https://www.caltech.edu')
-        return False
 
 
 # Main entry point.
