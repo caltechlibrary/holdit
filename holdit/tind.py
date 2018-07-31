@@ -3,9 +3,6 @@ tind.py: code for interacting with Caltech.TIND.io
 '''
 
 import requests
-from docopt import docopt
-from getpass import getpass
-import json
 from lxml import html
 from bs4 import BeautifulSoup
 
@@ -31,13 +28,10 @@ The hold list URL, via the Caltech Shibboleth login.
 # Login code.
 # .............................................................................
 
-def tind_json(access_handler, notifier):
-    # returns a tuple: (data, success)
-    # user, pswd = access_handler.name_and_password()
-    user = 'mhucka'
-    pswd = '<@cit4me!>'
+def tind_data(access_handler, notifier):
+    user, pswd = access_handler.name_and_password()
     if not user or not pswd:
-        return None, False
+        return None
     with requests.Session() as session:
         # Hack the user agent string.
         session.headers.update( { 'user-agent': _USER_AGENT_STRING } )
@@ -47,7 +41,7 @@ def tind_json(access_handler, notifier):
         if res.status_code >= 300:
             details = 'tind.io shib request returned status {}'.format(res.status_code)
             notifier.msg('Unexpected network result -- please inform developers',
-                         details, 'error')
+                         details, 'fatal')
             raise ServiceFailure(details)
 
         # Now do the login step.
@@ -74,13 +68,18 @@ def tind_json(access_handler, notifier):
         if not tree.xpath('//form[@action]'):
             details = 'Caltech Shib access result does not have expected form'
             notifier.msg('Unexpected network result -- please inform developers',
-                         details, 'error')
+                         details, 'fatal')
             raise ServiceFailure(details)
         next_url = tree.xpath('//form[@action]')[0].action
         SAMLResponse = tree.xpath('//input[@name="SAMLResponse"]')[0].value
         RelayState = tree.xpath('//input[@name="RelayState"]')[0].value
         saml_payload = {'SAMLResponse': SAMLResponse, 'RelayState': RelayState}
         res = session.post(next_url, data = saml_payload, allow_redirects = True)
+        if res.status_code != 200:
+            details = 'tind.io action post returned status {}'.format(res.status_code)
+            notifier.msg('Caltech.tind.io circulation page failed to respond',
+                         details, 'fatal')
+            raise ServiceFailure(details)
 
         # At this point, the session object has Invenio session cookies and
         # Shibboleth IDP session data.  We also have the TIND page we want,
@@ -95,7 +94,9 @@ def tind_json(access_handler, notifier):
         ajax_headers = {"X-Requested-With": "XMLHttpRequest",
                         "User-Agent": _USER_AGENT_STRING}
         res = session.get(ajax_url, headers = ajax_headers)
-        if res.status_code == 200:
-            return res.content, True
-        else:
-            return None, False
+        if res.status_code != 200:
+            details = 'tind.io ajax get returned status {}'.format(res.status_code)
+            notifier.msg('Caltech.tind.io failed to return hold data',
+                         details, 'fatal')
+            raise ServiceFailure(details)
+        return res.content
