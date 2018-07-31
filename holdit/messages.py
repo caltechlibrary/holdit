@@ -15,6 +15,8 @@ file "LICENSE" for more information.
 '''
 
 import sys
+import wx
+import wx.lib.dialogs
 
 try:
     from termcolor import colored
@@ -24,13 +26,83 @@ try:
 except:
     pass
 
+import holdit
+from holdit.exceptions import *
 
-def print_header(text, flags, quiet = False, colorize = True):
-    if not quiet:
-        msg('')
-        msg('{:-^78}'.format(' ' + text + ' '), flags, colorize)
-        msg('')
+
+# Class definitions.
+# ......................................................................
 
+class MessageHandlerCLI():
+    colorize = True
+    on_windows = sys.platform.startswith('win')
+
+    def __init__(self, use_color = True):
+        self.colorize = use_color
+
+
+    def msg(self, text, details = '', severity = 'info'):
+        msg(text + '\n' + details, severity, self.colorize)
+
+
+    def yes_no(self, question):
+        return input("{} (y/n) ".format(question)).startswith(('y', 'Y'))
+
+
+class MessageHandlerGUI():
+    def __init__(self):
+        pass
+
+
+    def msg(self, text, details = '', severity = 'info'):
+        # When running with a GUI, we only bring up error dialogs.
+        if 'error' not in severity:
+            return
+        short = text + '\n\nWould you like to try to continue?\n(Click "no" to quit.)'
+        app = wx.App()
+        frame = wx.Frame(None)
+        frame.Center()
+        dlg = wx.MessageDialog(frame, message = short,
+                               caption = "Holdit encountered a problem",
+                               style = wx.YES_NO | wx.YES_DEFAULT | wx.HELP | wx.ICON_)
+        clicked = dlg.ShowModal()
+        if clicked == wx.ID_HELP:
+            body = ("Holdit has encountered an error:\n"
+                    + "─"*30
+                    + "\n{}\n".format(details)
+                    + "─"*30
+                    + "\nIf the problem is due to a network timeout or "
+                    + "similar transient error, then please quit and try again "
+                    + "later. If you don't know why the error occurred or "
+                    + "if it is beyond your control, please also notify the "
+                    + "developers. You can reach the developers via email:\n\n"
+                    + "    Email: mhucka@library.caltech.edu\n")
+            info = wx.lib.dialogs.ScrolledMessageDialog(frame, body, "Error")
+            info.ShowModal()
+            info.Destroy()
+            frame.Destroy()
+        elif clicked == wx.ID_NO:
+            dlg.Destroy()
+            frame.Destroy()
+            raise UserCancelled
+        else:
+            dlg.Destroy()
+
+
+    def yes_no(self, question):
+        app = wx.App()
+        frame = wx.Frame(None)
+        frame.Center()
+        dlg = wx.MessageDialog(frame, message = question, caption = "Question",
+                               style = wx.YES_NO | wx.ICON_QUESTION)
+        clicked = dlg.ShowModal()
+        dlg.Destroy()
+        frame.Destroy()
+        return clicked == wx.ID_YES
+
+
+# Direct-access message utilities.
+# ......................................................................
 
 def msg(text, flags = None, colorize = True):
     '''Like the standard print(), but flushes the output immediately and
@@ -39,14 +111,25 @@ def msg(text, flags = None, colorize = True):
     output in that situation and this makes it very difficult to see what is
     happening in real time.
     '''
-    if colorize:
+    if colorize and 'termcolor' in sys.modules:
         print(color(text, flags), flush = True)
     else:
         print(text, flush = True)
 
 
 def color(text, flags = None, colorize = True):
-    (prefix, color_name, attributes) = color_codes(flags)
+    '''Color-code the 'text' according to 'flags' if 'colorize' is True.
+    'flags' can be a single string or a list of strings, as follows.
+    Explicit colors (when not using a severity color code):
+       'white', 'blue', 'grey', 'cyan', 'magenta'
+    Additional color codes reserved for message severities:
+       'info'  = informational (green)
+       'warn'  = warning (yellow)
+       'error' = severe error (red)
+    Optional color modifiers:
+       'underline', 'bold', 'reverse', 'dark'
+    '''
+    (prefix, color_name, attributes) = _color_codes(flags)
     if colorize:
         if attributes and color_name:
             return colored(text, color_name, attrs = attributes)
@@ -61,8 +144,18 @@ def color(text, flags = None, colorize = True):
     else:
         return text
 
+
+# Internal utilities.
+# ......................................................................
 
-def color_codes(flags):
+def _print_header(text, flags, quiet = False, colorize = True):
+    if not quiet:
+        msg('')
+        msg('{:-^78}'.format(' ' + text + ' '), flags, colorize)
+        msg('')
+
+
+def _color_codes(flags):
     color_name  = ''
     prefix = ''
     if type(flags) is not list:
