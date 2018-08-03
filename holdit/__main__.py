@@ -21,8 +21,8 @@ import sys
 
 import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
-from holdit.tind import tind_data
-from holdit.generate import generate_hold_list
+from holdit.tind import tind_json, tind_records_from_json
+from holdit.generate import generate_printable_list
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
 from holdit.exceptions import *
@@ -107,8 +107,9 @@ information and exit without doing anything else.
         else:
             credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
             message_handler = MessageHandlerCLI(use_color)
-        data = tind_data(credentials_handler, message_handler)
-        generate_hold_list(data)
+        data = tind_json(credentials_handler, message_handler)
+        records = tind_records_from_json(data)
+        generate_printable_list(records)
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
             msg('Quitting.', 'warn', use_color)
