@@ -1,4 +1,4 @@
-Holdit<img width="100px" align="right" src=".graphics/noun_Document Hold_1022878.svg">
+Holdit<img width="100px" align="right" src=".graphics/noun_1022878.svg">
 ======
 
 _Hold it_ is a small application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
