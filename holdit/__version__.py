@@ -8,7 +8,7 @@
 
 __version__     = '0.0.1'
 __title__       = 'holdit'
-__description__ = '''A small application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.'''
+__description__ = '''A small application program written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.'''
 __url__         = 'https://github.com/caltechlibrary/holdit'
 __author__      = 'Michael Hucka <mhucka@caltech.edu>'
 __email__       = 'mhucka@caltech.edu'
