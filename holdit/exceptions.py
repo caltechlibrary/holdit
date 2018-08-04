@@ -9,3 +9,7 @@ class UserCancelled(Exception):
 class ServiceFailure(Exception):
     '''Unrecoverable problem involving network services.'''
     pass
+
+class InternalError(Exception):
+    '''Unrecoverable problem involving Holdit itself.'''
+    pass
