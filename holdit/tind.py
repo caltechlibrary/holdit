@@ -213,3 +213,11 @@ def tind_records_from_json(json_data):
     for json_record in json_data['data']:
         records.append(TindRecord(json_record))
     return records
+
+
+def tind_records_filter(method = 'today'):
+    '''Returns a function that takes a TindRecord and returns True or False,
+    depending on whether the record should be included in the output.  This
+    is meant to be passed to Python filter() as the test function.
+    '''
+    return (lambda x: True)
