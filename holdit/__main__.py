@@ -22,7 +22,7 @@ import sys
 
 import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
-from holdit.tind import tind_json, tind_records_from_json
+from holdit.tind import tind_json, tind_records_from_json, tind_records_filter
 from holdit.generate import generate_printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
@@ -120,6 +120,14 @@ information and exit without doing anything else.
     # still have to resort to non-gui operation if the command line contained
     # options that implicate non-gui actions.
     try:
+        if use_gui:
+            credentials_handler = AccessHandlerGUI(user, pswd)
+            message_handler = MessageHandlerGUI()
+        else:
+            credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
+            message_handler = MessageHandlerCLI(use_color)
+
+        # Try to find the user's template, if any is provided.
         template_path = None
         if template:
             template_path = path.abspath(template)
@@ -127,21 +135,24 @@ information and exit without doing anything else.
                 template_path = None
                 msg('File "{}" not found or not readable -- using default.'.format(template),
                     'warn', colorize)
-        if use_gui:
-            credentials_handler = AccessHandlerGUI(user, pswd)
-            message_handler = MessageHandlerGUI()
-        else:
-            credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
-            message_handler = MessageHandlerCLI(use_color)
+
+        # Get the data from TIND and generate the output
         data = tind_json(credentials_handler, message_handler)
         records = tind_records_from_json(data)
-        result = generate_printable_doc(records, template_path)
-        if not output:
-            output = os.path.join(desktop_path(), "holds_print_list.docx")
-        rename_if_exists(output, message_handler)
-        result.save(output)
-        if use_gui:
+        filter = tind_records_filter(method = 'today')
+        result = generate_printable_doc(records, filter, template_path)
+
+        # Write the output somewhere or report there was none.
+        if result:
+            if not output:
+                output = os.path.join(desktop_path(), "holds_print_list.docx")
+            rename_if_exists(output, message_handler)
+            result.save(output)
             open_file(output)
+        else:
+            message_handler.msg('No new hold requests',
+                                'No new hold requests were found in caltech.tind.io',
+                                'info')
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
             msg('Quitting.', 'warn', use_color)
