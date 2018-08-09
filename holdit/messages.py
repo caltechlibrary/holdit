@@ -54,9 +54,21 @@ class MessageHandlerGUI():
         pass
 
 
+    def note(self, text):
+        '''Displays a simple notice with a single OK button.'''
+        app = wx.App()
+        frame = wx.Frame(None)
+        frame.Center()
+        style = wx.OK | wx.ICON_INFORMATION
+        dlg = wx.MessageDialog(frame, message = text, style = style, caption = "Note")
+        clicked = dlg.ShowModal()
+        dlg.Destroy()
+        frame.Destroy()
+
+
     def msg(self, text, details = '', severity = 'error'):
         # When running with a GUI, we only bring up error dialogs.
-        if 'error' not in severity and 'fatal' not in severity:
+        if 'info' in severity:
             return
         app = wx.App()
         frame = wx.Frame(None)
