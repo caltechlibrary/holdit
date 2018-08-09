@@ -22,7 +22,9 @@ import sys
 
 import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
-from holdit.tind import tind_json, tind_records_from_json, tind_records_filter
+from holdit.records import records_diff, records_filter
+from holdit.tind import records_from_tind
+from holdit.google_sheet import records_from_google, update_google
 from holdit.generate import generate_printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
@@ -41,12 +43,13 @@ from holdit.exceptions import *
     no_color   = ('do not color-code terminal output (default: do)', 'flag',   'C'),
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
+    no_open    = ('do not open the .docx file (default: open it)',   'flag',   'O'),
     reset      = ('reset keyring stored user name and password',     'flag',   'R'),
     version    = ('print version info and exit',                     'flag',   'V'),
 )
 
 def main(user = 'U', pswd = 'P', output='O', template='F',
-         no_color=False, no_gui=False, no_keyring=False,
+         no_color=False, no_gui=False, no_keyring=False, no_open=False,
          reset=False, version=False):
     '''Generate a list of current hold requests.
 
@@ -76,7 +79,7 @@ explicit template file, Holdit will use a built-in default template file.
 
 Holdit will write the output to a file named "holds_print_list.docx" in the
 user's Desktop directory, unless the -o option (/o on Windows) is given with
-an explicit file path.
+an explicit file path to use instead.
 
 If given the -V option (/V on Windows), this program will print version
 information and exit without doing anything else.
@@ -88,6 +91,7 @@ information and exit without doing anything else.
     use_color   = not no_color
     use_keyring = not no_keyring
     use_gui     = not no_gui
+    open_docx   = not no_open
 
     # We use default values that provide more intuitive help text printed by
     # plac.  Rewrite the values to things we actually use.
@@ -121,11 +125,11 @@ information and exit without doing anything else.
     # options that implicate non-gui actions.
     try:
         if use_gui:
-            credentials_handler = AccessHandlerGUI(user, pswd)
-            message_handler = MessageHandlerGUI()
+            accesser = AccessHandlerGUI(user, pswd)
+            messager = MessageHandlerGUI()
         else:
-            credentials_handler = AccessHandlerCLI(user, pswd, use_keyring, reset)
-            message_handler = MessageHandlerCLI(use_color)
+            accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
+            messager = MessageHandlerCLI(use_color)
 
         # Try to find the user's template, if any is provided.
         template_path = None
@@ -133,26 +137,29 @@ information and exit without doing anything else.
             template_path = path.abspath(template)
             if not readable(template_path):
                 template_path = None
-                msg('File "{}" not found or not readable -- using default.'.format(template),
+                msg('File "{}" not not readable -- using default.'.format(template),
                     'warn', colorize)
 
-        # Get the data from TIND and generate the output
-        data = tind_json(credentials_handler, message_handler)
-        records = tind_records_from_json(data)
-        filter = tind_records_filter(method = 'today')
-        result = generate_printable_doc(records, filter, template_path)
+        # Get the data.
+        tind_records = records_from_tind(accesser, messager)
+        google_records = records_from_google(messager)
+        missing_records = records_diff(google_records, tind_records)
+        new_records = list(filter(records_filter('all'), missing_records))
 
-        # Write the output somewhere or report there was none.
-        if result:
+        if len(new_records) > 0:
+            # Update the spreadsheet with new records.
+            update_google(new_records, messager)
+            # Write a printable report.
             if not output:
-                output = os.path.join(desktop_path(), "holds_print_list.docx")
-            rename_if_exists(output, message_handler)
+                output = path.join(desktop_path(), "holds_print_list.docx")
+            rename_if_exists(output, messager)
+            result = generate_printable_doc(new_records, template_path)
             result.save(output)
-            open_file(output)
+            # Show the file to the user, unless told not to.
+            if open_docx:
+                open_file(output)
         else:
-            message_handler.msg('No new hold requests',
-                                'No new hold requests were found in caltech.tind.io',
-                                'info')
+            messager.note('No new hold requests were found in TIND.')
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
             msg('Quitting.', 'warn', use_color)
