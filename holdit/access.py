@@ -150,7 +150,7 @@ class MainFrame(wx.Frame):
         self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.login.Bind(wx.EVT_TEXT, self.on_text)
         self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style = wx.ALIGN_RIGHT)
-        self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
+        self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PASSWORD)
         self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.password.Bind(wx.EVT_TEXT, self.on_text)
         self.bottom_line = wx.StaticLine(panel, wx.ID_ANY)
