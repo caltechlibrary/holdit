@@ -143,7 +143,7 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
         self.SetSize((355, 175))
-        self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit: generate a list of hold requests", style = wx.ALIGN_CENTER)
+        self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit! — generate a list of hold requests", style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
@@ -175,7 +175,7 @@ class MainFrame(wx.Frame):
 
 
     def __set_properties(self):
-        self.SetTitle("Holdit")
+        self.SetTitle("Holdit!")
         self.title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD, 0, "Arial"))
         self.top_line.SetMinSize((360, 2))
         self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
