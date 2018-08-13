@@ -59,8 +59,8 @@ class MessageHandlerGUI():
         app = wx.App()
         frame = wx.Frame(None)
         frame.Center()
-        style = wx.OK | wx.ICON_INFORMATION
-        dlg = wx.MessageDialog(frame, message = text, style = style, caption = "Note")
+        dlg = wx.GenericMessageDialog(frame, text, caption = "Holdit!",
+                                      style = wx.OK | wx.ICON_INFORMATION)
         clicked = dlg.ShowModal()
         dlg.Destroy()
         frame.Destroy()
@@ -109,8 +109,8 @@ class MessageHandlerGUI():
         app = wx.App()
         frame = wx.Frame(None)
         frame.Center()
-        dlg = wx.MessageDialog(frame, message = question, caption = "Question",
-                               style = wx.YES_NO | wx.ICON_QUESTION)
+        dlg = wx.GenericMessageDialog(frame, question, caption = "Holdit!",
+                                      style = wx.YES_NO | wx.ICON_QUESTION)
         clicked = dlg.ShowModal()
         dlg.Destroy()
         frame.Destroy()
