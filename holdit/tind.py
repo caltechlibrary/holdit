@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 import holdit
 from holdit.exceptions import *
+from holdit.records import HoldRecord
 
 
 # Global constants.
@@ -29,32 +30,10 @@ The hold list URL, via the Caltech Shibboleth login.
 # Class definitions.
 # .............................................................................
 
-class TindRecord(object):
+class TindRecord(HoldRecord):
     '''Class to store structured representations of a TIND hold request.'''
 
     raw_json = None
-
-    requester_name = ''               # String
-    requester_type = ''               # String
-    requester_url = ''                # String
-
-    item_title = ''                   # String
-    item_record_url = ''              # String
-    item_dewey = ''
-    item_barcode = ''
-    item_info = ''                    # String
-    item_info_url = ''                # String
-    item_location_name = ''           # String
-    item_location_code = ''           # String
-    item_loan_status = ''             # String
-    item_loan_url = ''                # String
-
-    date_requested = ''               # String (date)
-    date_due = ''                     # String (date)
-    date_last_notice_sent = ''        # String (date)
-    overdue_notices_count = ''        # String
-
-    holds_count = ''                  # String
 
     def __init__(self, json_record):
         '''json_record = single 'data' record from the raw json returned by
@@ -69,15 +48,15 @@ class TindRecord(object):
         relevant_fragment = json_record[0]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
         self.requester_url = soup.a['href']
-        self.requester_name = soup.a.get_text()
-        self.requester_type = soup.body.small.get_text()
+        self.requester_name = soup.a.get_text().strip()
+        self.requester_type = soup.body.small.get_text().strip()
 
 
     def parse_item_details(self, json_record):
         relevant_fragment = json_record[1]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
         self.item_record_url = soup.body.a['href']
-        self.item_title = soup.body.a.get_text()
+        self.item_title = soup.body.a.get_text().strip()
 
         if soup.body.small.find('i'):
             due_string = soup.body.small.i['data-original-title']
@@ -90,41 +69,62 @@ class TindRecord(object):
                 self.overdue_notices_count = due_string[start + 22 :]
 
             self.item_loan_url = soup.body.small.a['href']
-            self.item_loan_status = soup.body.small.a.get_text()
-        elif 'Lost' in soup.body.small:
-            self.item_loan_status = 'Lost'
+            self.item_loan_status = soup.body.small.a.get_text().lower().strip()
+        elif 'lost' in str(soup.body.small).lower():
+            self.item_loan_status = 'lost'
+        elif 'on hold' in str(soup.body.small).lower():
+            self.item_loan_status = 'on hold'
+        elif 'on shelf' in str(soup.body.small).lower():
+            self.item_loan_status = 'on shelf'
 
         relevant_fragment = json_record[2]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
         self.item_info_url = soup.body.a['href']
-        self.item_barcode = soup.body.a.get_text()
+        self.item_barcode = soup.body.a.get_text().strip()
         spans = soup.body.find_all('span')
-        self.item_dewey = spans[1].get_text()
+        self.item_dewey = spans[1].get_text().strip()
 
         relevant_fragment = json_record[3]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
-        self.date_requested = soup.body.span.get_text()
+        self.date_requested = soup.body.span.get_text().strip()
 
         relevant_fragment = json_record[4]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
         self.date_last_notice_sent = soup.span['data-original-title']
-        self.overdue_notices_count = soup.span.get_text()
+        self.overdue_notices_count = soup.span.get_text().strip()
 
         relevant_fragment = json_record[5]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
-        self.holds_count = soup.body.p.get_text()
+        self.holds_count = soup.body.p.get_text().strip()
 
         relevant_fragment = json_record[6]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
         self.item_location_name = soup.body.span['data-original-title']
-        self.item_location_code = soup.body.span.get_text()
+        self.item_location_code = soup.body.span.get_text().strip()
 
 
 # Login code.
 # .............................................................................
 
+def records_from_tind(access_handler, notifier):
+    json_data = tind_json(access_handler, notifier)
+    total_records = json_data['recordsTotal']
+    if total_records and total_records[0][0] < 1:
+        return []
+    num_records = total_records[0][0]
+    records = []
+    for json_record in json_data['data']:
+        tr = TindRecord(json_record)
+        # Special hack: the way the holds are being done with Tind, we only
+        # need to retrieve the new holds that are marked "on shelf".
+        #if 'on shelf' in tr.item_loan_status:
+        if 'on shelf' in tr.item_loan_status or '35047014531644' in tr.item_barcode:
+            records.append(tr)
+    return records
+
+
 def tind_json(access_handler, notifier):
-    user, pswd = access_handler.name_and_password()
+    # user, pswd = access_handler.name_and_password()
     if not user or not pswd:
         return None
     with requests.Session() as session:
@@ -202,22 +202,3 @@ def tind_json(access_handler, notifier):
                          details, 'fatal')
             raise ServiceFailure(details)
         return json_data
-
-
-def tind_records_from_json(json_data):
-    total_records = json_data['recordsTotal']
-    if total_records and total_records[0][0] < 1:
-        return []
-    num_records = total_records[0][0]
-    records = []
-    for json_record in json_data['data']:
-        records.append(TindRecord(json_record))
-    return records
-
-
-def tind_records_filter(method = 'today'):
-    '''Returns a function that takes a TindRecord and returns True or False,
-    depending on whether the record should be included in the output.  This
-    is meant to be passed to Python filter() as the test function.
-    '''
-    return (lambda x: True)
