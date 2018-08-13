@@ -12,11 +12,10 @@ class HoldRecord(object):
     requester_url = ''                # String
 
     item_title = ''                   # String
+    item_details_url = ''             # String
     item_record_url = ''              # String
-    item_dewey = ''
+    item_call_number = ''
     item_barcode = ''
-    item_info = ''                    # String
-    item_info_url = ''                # String
     item_location_name = ''           # String
     item_location_code = ''           # String
     item_loan_status = ''             # String
