@@ -6,6 +6,7 @@ import os
 from   os import path
 import sys
 import subprocess
+import webbrowser
 
 import holdit
 
@@ -69,3 +70,7 @@ def open_file(file):
         os.startfile(file)
     elif os.name == 'posix':
         subprocess.call(('xdg-open', file))
+
+
+def open_url(url):
+    webbrowser.open(url)
