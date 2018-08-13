@@ -9,6 +9,7 @@ from oauth2client import file as oauth_file, client, tools
 import holdit
 from holdit.exceptions import *
 from holdit.records import HoldRecord
+from holdit.files import open_url
 
 
 # Global constants.
@@ -25,7 +26,8 @@ _CREDENTIALS_STORE = 'credentials.json'
 
 # Set this to a safe spreadsheet when testing, then change this value to the
 # actual spreadsheet when moving to production.
-_SPREADSHEET_ID = '1i2pNN-gOzf1TvNe36YhzVIGEseD5EqdK8QIpefOKeTo'
+_GS_BASE_URL = 'https://docs.google.com/spreadsheets/d/'
+_GS_ID = '1i2pNN-gOzf1TvNe36YhzVIGEseD5EqdK8QIpefOKeTo'
 _SHEET_NAME = 'June 16 - Oct 1'
 
 
@@ -58,7 +60,7 @@ def spreadsheet_data():
 
     # Call the Sheets API
     sheets_service = service.spreadsheets().values()
-    data = sheets_service.get(spreadsheetId = _SPREADSHEET_ID, range = _SHEET_NAME).execute()
+    data = sheets_service.get(spreadsheetId = _GS_ID, range = _SHEET_NAME).execute()
     return data.get('values', [])
 
 
@@ -69,8 +71,9 @@ def records_from_google(message_handler):
     # First row is the title row.
     results = []
     for index, row in enumerate(spreadsheet_rows[1:], start = 1):
-        if not row:
+        if not row or len(row) < 7:     # Empty or junk row.
             continue
+
         record = GoogleHoldRecord()
 
         cell = row[0]
@@ -93,7 +96,7 @@ def records_from_google(message_handler):
         end = cell.find('\n')
         if end:
             record.item_barcode = cell[:end]
-            record.item_dewey = cell[end + 1:].strip()
+            record.item_call_number = cell[end + 1:].strip()
         else:
             record.item_title = cell.strip()
 
@@ -131,15 +134,19 @@ def update_google(records, message_handler):
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
-    result = sheets_service.append(spreadsheetId = _SPREADSHEET_ID,
+    result = sheets_service.append(spreadsheetId = _GS_ID,
                                    range = _SHEET_NAME, body = body,
                                    valueInputOption = 'RAW').execute()
+
+
+def open_google():
+    open_url(_GS_BASE_URL + _GS_ID)
 
 
 def google_row_for_record(record):
     a = record.requester_name + '\n' + record.requester_type
     b = record.item_title + '\n' + record.item_loan_status
-    c = record.item_barcode + '\n' + record.item_dewey
+    c = record.item_barcode + '\n' + record.item_call_number
     d = record.date_requested
     e = record.overdue_notices_count
     f = record.holds_count
