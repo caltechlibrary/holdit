@@ -41,6 +41,10 @@ class MessageHandlerCLI():
         self.colorize = use_color
 
 
+    def note(self, text):
+        msg(text, 'info', self.colorize)
+
+
     def msg(self, text, details = '', severity = 'info'):
         msg(text + '\n' + details, severity, self.colorize)
 
