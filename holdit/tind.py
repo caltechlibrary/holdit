@@ -55,7 +55,7 @@ class TindRecord(HoldRecord):
     def parse_item_details(self, json_record):
         relevant_fragment = json_record[1]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
-        self.item_record_url = soup.body.a['href']
+        self.item_details_url = soup.body.a['href']
         self.item_title = soup.body.a.get_text().strip()
 
         if soup.body.small.find('i'):
@@ -82,7 +82,7 @@ class TindRecord(HoldRecord):
         self.item_info_url = soup.body.a['href']
         self.item_barcode = soup.body.a.get_text().strip()
         spans = soup.body.find_all('span')
-        self.item_dewey = spans[1].get_text().strip()
+        self.item_call_number = spans[1].get_text().strip()
 
         relevant_fragment = json_record[3]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
@@ -124,7 +124,7 @@ def records_from_tind(access_handler, notifier):
 
 
 def tind_json(access_handler, notifier):
-    # user, pswd = access_handler.name_and_password()
+    user, pswd = access_handler.name_and_password()
     if not user or not pswd:
         return None
     with requests.Session() as session:
