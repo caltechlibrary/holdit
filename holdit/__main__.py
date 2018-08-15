@@ -1,5 +1,5 @@
 '''
-__main__: main command-line interface to Holdit.
+__main__: main command-line interface to Holdit!
 
 Authors
 -------
@@ -24,7 +24,7 @@ import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
 from holdit.records import records_diff, records_filter
 from holdit.tind import records_from_tind
-from holdit.google_sheet import records_from_google, update_google
+from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import generate_printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
@@ -43,21 +43,22 @@ from holdit.exceptions import *
     no_color   = ('do not color-code terminal output (default: do)', 'flag',   'C'),
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
-    no_open    = ('do not open the .docx file (default: open it)',   'flag',   'O'),
+    no_sheet   = ('do not open the spreadsheet (default: open it)',  'flag',   'S'),
     reset      = ('reset keyring stored user name and password',     'flag',   'R'),
     version    = ('print version info and exit',                     'flag',   'V'),
 )
 
 def main(user = 'U', pswd = 'P', output='O', template='F',
-         no_color=False, no_gui=False, no_keyring=False, no_open=False,
+         no_color=False, no_gui=False, no_keyring=False, no_sheet=False,
          reset=False, version=False):
-    '''Generate a list of current hold requests.
+    '''Generate a printable Word document containing recent hold requests and
+also update the relevant Google spreadsheet used for tracking requests.
 
-By default, Holdit uses a GUI dialog to get the user's Caltech access login
+By default, Holdit! uses a GUI dialog to get the user's Caltech access login
 name and password.  If the -G option is given (/G on Windows), it will not
 use a GUI dialog, and will instead use the operating system's
 keyring/keychain functionality to get a user name and password.  If the
-information does not exist from a previous run of Holdit, it will query the
+information does not exist from a previous run of Holdit!, it will query the
 user interactively for the user name and password, and (unless the -K or /K
 argument is given) store them in the user's keyring/keychain so that it does
 not have to ask again in the future.  It is also possible to supply the
@@ -67,17 +68,23 @@ multiuser computer systems.
 
 To reset the user name and password (e.g., if a mistake was made the last
 time and the wrong credentials were stored in the keyring/keychain system),
-add the -R (or /R on Windows) command-line argument to a command.  This
-argument will make Holdit query for the user name and password again even if
+use the -R (or /R on Windows) command-line argument to a command.  This
+argument will make Holdit! query for the user name and password again even if
 an entry already exists in the keyring or keychain.
 
-By default, Holdit looks for a .docx file named "template.docx" in the
-directory where Holdit is located, and uses that as the template for record
-printing.  If given the -t option (/t on Windows), it will look for the named
-file instead.  If it cannot find a file "template.docx" and is not given an
-explicit template file, Holdit will use a built-in default template file.
+By default, Holdit! looks for a .docx file named "template.docx" in the
+directory where Holdit! is located, and uses that as the template for record
+printing.  If given the -t option followed by a file name (/t on Windows), it
+will look for the named file instead.  If it is not given an explicit
+template file and it cannot find a file "template.docx", Holdit! will use a
+built-in default template file.
 
-Holdit will write the output to a file named "holds_print_list.docx" in the
+By default, Holdit! will also open the Google spreadsheet used by the
+Circulation staff to track hold requests.  This action is inhibited if given
+the -S option (/S on Windows).  The Google spreadsheet is always updated in
+any case.
+
+Holdit! will write the output to a file named "holds_print_list.docx" in the
 user's Desktop directory, unless the -o option (/o on Windows) is given with
 an explicit file path to use instead.
 
@@ -91,7 +98,7 @@ information and exit without doing anything else.
     use_color   = not no_color
     use_keyring = not no_keyring
     use_gui     = not no_gui
-    open_docx   = not no_open
+    view_sheet  = not no_sheet
 
     # We use default values that provide more intuitive help text printed by
     # plac.  Rewrite the values to things we actually use.
@@ -126,10 +133,10 @@ information and exit without doing anything else.
     try:
         if use_gui:
             accesser = AccessHandlerGUI(user, pswd)
-            messager = MessageHandlerGUI()
+            notifier = MessageHandlerGUI()
         else:
             accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
-            messager = MessageHandlerCLI(use_color)
+            notifier = MessageHandlerCLI(use_color)
 
         # Try to find the user's template, if any is provided.
         template_path = None
@@ -141,25 +148,29 @@ information and exit without doing anything else.
                     'warn', colorize)
 
         # Get the data.
-        tind_records = records_from_tind(accesser, messager)
-        google_records = records_from_google(messager)
+        tind_records = records_from_tind(accesser, notifier)
+        google_records = records_from_google(notifier)
         missing_records = records_diff(google_records, tind_records)
         new_records = list(filter(records_filter('all'), missing_records))
 
         if len(new_records) > 0:
             # Update the spreadsheet with new records.
-            update_google(new_records, messager)
+            update_google(new_records, notifier)
             # Write a printable report.
             if not output:
                 output = path.join(desktop_path(), "holds_print_list.docx")
-            rename_if_exists(output, messager)
+            rename_if_exists(output, notifier)
             result = generate_printable_doc(new_records, template_path)
             result.save(output)
-            # Show the file to the user, unless told not to.
-            if open_docx:
-                open_file(output)
+            open_file(output)
         else:
-            messager.note('No new hold requests were found in TIND.')
+            notifier.note('No new hold requests were found in TIND.')
+        # Open the spreadsheet too, if requested.
+        if use_gui:
+            if notifier.yes_no('Open the tracking spreadsheet?'):
+                open_google()
+        elif view_sheet:
+            open_google()
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
             msg('Quitting.', 'warn', use_color)
