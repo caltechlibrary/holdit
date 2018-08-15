@@ -155,7 +155,7 @@ information and exit without doing anything else.
 
         if len(new_records) > 0:
             # Update the spreadsheet with new records.
-            update_google(new_records, notifier)
+            update_google(new_records, notifier, accesser.user)
             # Write a printable report.
             if not output:
                 output = path.join(desktop_path(), "holds_print_list.docx")
