@@ -33,11 +33,18 @@ class HoldRecord(object):
 # .............................................................................
 
 def records_diff(known_records, new_records):
-    known_barcodes = [r.item_barcode for r in known_records]
+    '''Returns the records from 'new_records' missing from 'known_records'.
+    The comparison is done on the basis of bar codes and request dates.'''
     diffs = []
-    for record in new_records:
-        if record.item_barcode not in known_barcodes:
-            diffs.append(record)
+    for candidate in new_records:
+        matched = [record for record in known_records
+                   if record.item_barcode == candidate.item_barcode]
+        if not matched:
+            diffs.append(candidate)
+        else:
+            for record in matched:
+                if candidate.date_requested != record.date_requested:
+                    diffs.append(candidate)
     return diffs
 
 
