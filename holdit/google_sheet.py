@@ -28,7 +28,6 @@ _CREDENTIALS_STORE = 'credentials.json'
 # actual spreadsheet when moving to production.
 _GS_BASE_URL = 'https://docs.google.com/spreadsheets/d/'
 _GS_ID = '1i2pNN-gOzf1TvNe36YhzVIGEseD5EqdK8QIpefOKeTo'
-_SHEET_NAME = 'June 16 - Oct 1'
 
 
 # Class definitions.
@@ -57,10 +56,9 @@ def spreadsheet_credentials():
 def spreadsheet_data():
     creds = spreadsheet_credentials()
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
-
-    # Call the Sheets API
     sheets_service = service.spreadsheets().values()
-    data = sheets_service.get(spreadsheetId = _GS_ID, range = _SHEET_NAME).execute()
+    # If you don't supply a sheet name in the range arg, you get 1st sheet.
+    data = sheets_service.get(spreadsheetId = _GS_ID, range = 'A:Z').execute()
     return data.get('values', [])
 
 
@@ -135,7 +133,7 @@ def update_google(records, message_handler):
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
     result = sheets_service.append(spreadsheetId = _GS_ID,
-                                   range = _SHEET_NAME, body = body,
+                                   range = 'A:Z', body = body,
                                    valueInputOption = 'RAW').execute()
 
 
