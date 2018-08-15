@@ -53,7 +53,9 @@ class AccessHandlerGUI():
             if cancel:
                 if __debug__: log('User initiated quit from within GUI')
                 raise UserCancelled
-        return user, pswd
+        self.user = user
+        self.pswd = pswd
+        return self.user, self.pswd
 
 
     def _credentials_from_gui(self, user, pswd):
@@ -100,7 +102,9 @@ class AccessHandlerCLI():
                 if s_user != user or s_pswd != pswd:
                     if __debug__: log('Saving credentials to keyring')
                     save_keyring_credentials(_KEYRING, user, pswd)
-        return user, pswd
+        self.user = user
+        self.pswd = pswd
+        return self.user, self.pswd
 
 
 # Internal implementation classes for login GUI.
