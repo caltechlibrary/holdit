@@ -36,6 +36,28 @@ _GS_ID = '1i2pNN-gOzf1TvNe36YhzVIGEseD5EqdK8QIpefOKeTo'
 class GoogleHoldRecord(HoldRecord):
     caltech_status = ''
     caltech_staff_initials = ''
+    caltech_holdit_user = ''
+
+    def __init__(self, record = None):
+        '''Initialize using a TindRecord.'''
+        if record:
+            self.requester_name        = record.requester_name
+            self.requester_type        = record.requester_type
+            self.requester_url         = record.requester_url
+            self.item_title            = record.item_title
+            self.item_details_url      = record.item_details_url
+            self.item_record_url       = record.item_record_url
+            self.item_call_number      = record.item_call_number
+            self.item_barcode          = record.item_barcode
+            self.item_location_name    = record.item_location_name
+            self.item_location_code    = record.item_location_code
+            self.item_loan_status      = record.item_loan_status
+            self.item_loan_url         = record.item_loan_url
+            self.date_requested        = record.date_requested
+            self.date_due              = record.date_due
+            self.date_last_notice_sent = record.date_last_notice_sent
+            self.overdue_notices_count = record.overdue_notices_count
+            self.holds_count           = record.holds_count
 
 
 # Main code.
@@ -69,7 +91,7 @@ def records_from_google(message_handler):
     # First row is the title row.
     results = []
     for index, row in enumerate(spreadsheet_rows[1:], start = 1):
-        if not row or len(row) < 7:     # Empty or junk row.
+        if not row or len(row) < 8:     # Empty or junk row.
             continue
 
         record = GoogleHoldRecord()
@@ -112,19 +134,25 @@ def records_from_google(message_handler):
 
         if len(row) > 7:
             cell = row[7]
-            record.caltech_status = cell.strip()
+            record.caltech_holdit_user = cell.strip()
 
         if len(row) > 8:
             cell = row[8]
+            record.caltech_status = cell.strip()
+
+        if len(row) > 9:
+            cell = row[9]
             record.caltech_staff_initials = cell.strip()
 
         results.append(record)
     return results
 
 
-def update_google(records, message_handler):
+def update_google(records, message_handler, user):
     data = []
     for record in records:
+        record = GoogleHoldRecord(record)
+        record.caltech_holdit_user = user
         data.append(google_row_for_record(record))
     if not data:
         return
@@ -132,9 +160,8 @@ def update_google(records, message_handler):
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
-    result = sheets_service.append(spreadsheetId = _GS_ID,
-                                   range = 'A:Z', body = body,
-                                   valueInputOption = 'RAW').execute()
+    result = sheets_service.append(spreadsheetId = _GS_ID, range = 'A:Z',
+                                   body = body, valueInputOption = 'RAW').execute()
 
 
 def open_google():
@@ -149,5 +176,7 @@ def google_row_for_record(record):
     e = record.overdue_notices_count
     f = record.holds_count
     g = record.item_location_code
+    h = record.caltech_holdit_user
+    i = record.caltech_status
     # FIXME: should do status & staff initial
-    return [a, b, c, d, e, f, g]
+    return [a, b, c, d, e, f, g, h, i]
