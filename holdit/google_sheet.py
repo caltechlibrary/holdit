@@ -159,8 +159,9 @@ def update_google(gs_id, records, message_handler, user):
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
-    result = sheets_service.append(spreadsheetId = gs_id, range = 'A:Z',
-                                   body = body, valueInputOption = 'RAW').execute()
+    result = sheets_service.append(spreadsheetId = gs_id,
+                                   range = 'A:Z', body = body,
+                                   valueInputOption = 'USER_ENTERED').execute()
 
 
 def open_google(gs_id):
@@ -168,9 +169,18 @@ def open_google(gs_id):
 
 
 def google_row_for_record(record):
-    a = record.requester_name + '\n' + record.requester_type
-    b = record.item_title + '\n' + record.item_loan_status
-    c = record.item_barcode + '\n' + record.item_call_number
+    def requester_cell(r):
+        return link(r.requester_name + '\n' + r.requester_type, r.requester_url)
+
+    def item_cell(r):
+        return link(r.item_title + '\n' + r.item_loan_status, r.item_details_url)
+
+    def info_cell(r):
+        return link(r.item_barcode + '\n' + r.item_call_number, r.item_record_url)
+
+    a = requester_cell(record)
+    b = item_cell(record)
+    c = info_cell(record)
     d = record.date_requested
     e = record.overdue_notices_count
     f = record.holds_count
@@ -179,3 +189,7 @@ def google_row_for_record(record):
     i = record.caltech_status
     j = record.caltech_staff_initials
     return [a, b, c, d, e, f, g, h, i, j]
+
+
+def link(value, url):
+    return '=HYPERLINK("{}","{}")'.format(url, value)
