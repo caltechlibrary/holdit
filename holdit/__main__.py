@@ -22,13 +22,14 @@ import sys
 
 import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
+from holdit.config import Config
 from holdit.records import records_diff, records_filter
 from holdit.tind import records_from_tind
 from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import generate_printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
-from holdit.files import readable, open_file, rename_if_exists, desktop_path
+from holdit.files import readable, open_file, rename_existing, desktop_path, module_path
 from holdit.exceptions import *
 
 
@@ -127,10 +128,8 @@ information and exit without doing anything else.
     if use_gui and reset:
         msg('Warning: reset flag ignored when using GUI', 'warn', use_color)
 
-    # If the user left the gui option as default (meaning, use gui), we may
-    # still have to resort to non-gui operation if the command line contained
-    # options that implicate non-gui actions.
     try:
+        config = Config()
         if use_gui:
             accesser = AccessHandlerGUI(user, pswd)
             notifier = MessageHandlerGUI()
@@ -138,29 +137,34 @@ information and exit without doing anything else.
             accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
             notifier = MessageHandlerCLI(use_color)
 
-        # Try to find the user's template, if any is provided.
-        template_path = None
+        # The default template is expected to be inside the Holdit module.
+        # If the user supplies a template, we use it instead.
+        template_file = config.get('holdit', 'template')
+        template_file = path.abspath(path.join(module_path(), template_file))
         if template:
-            template_path = path.abspath(template)
-            if not readable(template_path):
-                template_path = None
+            temp = path.abspath(template)
+            if readable(temp):
+                template_file = temp
+            else:
+                # Use plain msg() b/c cmd line flags only available in CLI mode.
                 msg('File "{}" not not readable -- using default.'.format(template),
                     'warn', colorize)
 
         # Get the data.
+        spreadsheet_id = config.get('holdit', 'spreadsheet_id')
         tind_records = records_from_tind(accesser, notifier)
-        google_records = records_from_google(notifier)
+        google_records = records_from_google(spreadsheet_id, notifier)
         missing_records = records_diff(google_records, tind_records)
         new_records = list(filter(records_filter('all'), missing_records))
 
         if len(new_records) > 0:
             # Update the spreadsheet with new records.
-            update_google(new_records, notifier, accesser.user)
+            update_google(spreadsheet_id, new_records, notifier, accesser.user)
             # Write a printable report.
             if not output:
                 output = path.join(desktop_path(), "holds_print_list.docx")
-            rename_if_exists(output, notifier)
-            result = generate_printable_doc(new_records, template_path)
+            rename_existing(output, notifier)
+            result = generate_printable_doc(new_records, template_file)
             result.save(output)
             open_file(output)
         else:
@@ -168,9 +172,9 @@ information and exit without doing anything else.
         # Open the spreadsheet too, if requested.
         if use_gui:
             if notifier.yes_no('Open the tracking spreadsheet?'):
-                open_google()
+                open_google(spreadsheet_id)
         elif view_sheet:
-            open_google()
+            open_google(spreadsheet_id)
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
             msg('Quitting.', 'warn', use_color)
