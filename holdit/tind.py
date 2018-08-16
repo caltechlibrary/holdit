@@ -118,7 +118,7 @@ def records_from_tind(access_handler, notifier):
         # Special hack: the way the holds are being done with Tind, we only
         # need to retrieve the new holds that are marked "on shelf".
         #if 'on shelf' in tr.item_loan_status:
-        if 'on shelf' in tr.item_loan_status or '35047014531644' in tr.item_barcode:
+        if 'on shelf' in tr.item_loan_status:
             records.append(tr)
     return records
 
