@@ -79,7 +79,7 @@ class TindRecord(HoldRecord):
 
         relevant_fragment = json_record[2]
         soup = BeautifulSoup(relevant_fragment, features='lxml')
-        self.item_info_url = soup.body.a['href']
+        self.item_record_url = soup.body.a['href']
         self.item_barcode = soup.body.a.get_text().strip()
         spans = soup.body.find_all('span')
         self.item_call_number = spans[1].get_text().strip()
