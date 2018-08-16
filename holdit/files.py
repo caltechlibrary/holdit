@@ -43,14 +43,18 @@ def desktop_path():
         return path.join(path.join(path.expanduser('~')), 'Desktop')
 
 
-def rename_if_exists(file, notifier):
+def rename_existing(file, notifier):
     def rename(f):
         backup = f + '.bak'
-        notifier.msg('Renaming existing file "{}" to "{}"'.format(f, backup),
+        # If we fail, we just give up instead of throwing an exception.
+        try:
+            os.rename(f, backup)
+        except:
+            return
+        notifier.msg('Renamed existing file "{}" to "{}"'.format(f, backup),
                      'To avoid overwriting the existing file "{}", '
                      + 'it has been renamed to "{}"'.format(f, backup),
                      'info')
-        os.rename(f, backup)
 
     if path.exists(file):
         rename(file)
