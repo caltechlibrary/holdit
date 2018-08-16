@@ -7,6 +7,9 @@ import os
 from   os import path as path
 import sys
 
+import holdit
+from holdit.files import module_path
+
 
 # Class definitions.
 # .............................................................................
@@ -14,7 +17,7 @@ import sys
 class Config():
     '''A class to encapsulate reading our configuration file.'''
 
-    _default_config_file = path.join(path.dirname(__file__), "holdit.ini")
+    _default_config_file = path.join(module_path(), "holdit.ini")
 
     def __init__(self, cfg_file=_default_config_file):
         self._cfg = ConfigParser()
