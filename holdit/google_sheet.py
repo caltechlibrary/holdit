@@ -27,7 +27,6 @@ _CREDENTIALS_STORE = 'credentials.json'
 # Set this to a safe spreadsheet when testing, then change this value to the
 # actual spreadsheet when moving to production.
 _GS_BASE_URL = 'https://docs.google.com/spreadsheets/d/'
-_GS_ID = '1i2pNN-gOzf1TvNe36YhzVIGEseD5EqdK8QIpefOKeTo'
 
 
 # Class definitions.
@@ -66,26 +65,8 @@ class GoogleHoldRecord(HoldRecord):
 # The following credentials and connection code is based on the Google examples
 # found at https://developers.google.com/sheets/api/quickstart/python
 
-def spreadsheet_credentials():
-    store = oauth_file.Storage(_OAUTH_TOKEN_STORE)
-    creds = store.get()
-    if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets(_CREDENTIALS_STORE, _OAUTH_SCOPE)
-        creds = tools.run_flow(flow, store)
-    return creds
-
-
-def spreadsheet_data():
-    creds = spreadsheet_credentials()
-    service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
-    sheets_service = service.spreadsheets().values()
-    # If you don't supply a sheet name in the range arg, you get 1st sheet.
-    data = sheets_service.get(spreadsheetId = _GS_ID, range = 'A:Z').execute()
-    return data.get('values', [])
-
-
-def records_from_google(message_handler):
-    spreadsheet_rows = spreadsheet_data()
+def records_from_google(gs_id, message_handler):
+    spreadsheet_rows = spreadsheet_content(gs_id)
     if spreadsheet_rows == []:
         return []
     # First row is the title row.
@@ -148,7 +129,25 @@ def records_from_google(message_handler):
     return results
 
 
-def update_google(records, message_handler, user):
+def spreadsheet_credentials():
+    store = oauth_file.Storage(_OAUTH_TOKEN_STORE)
+    creds = store.get()
+    if not creds or creds.invalid:
+        flow = client.flow_from_clientsecrets(_CREDENTIALS_STORE, _OAUTH_SCOPE)
+        creds = tools.run_flow(flow, store)
+    return creds
+
+
+def spreadsheet_content(gs_id):
+    creds = spreadsheet_credentials()
+    service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
+    sheets_service = service.spreadsheets().values()
+    # If you don't supply a sheet name in the range arg, you get 1st sheet.
+    data = sheets_service.get(spreadsheetId = gs_id, range = 'A:Z').execute()
+    return data.get('values', [])
+
+
+def update_google(gs_id, records, message_handler, user):
     data = []
     for record in records:
         record = GoogleHoldRecord(record)
@@ -160,12 +159,12 @@ def update_google(records, message_handler, user):
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
-    result = sheets_service.append(spreadsheetId = _GS_ID, range = 'A:Z',
+    result = sheets_service.append(spreadsheetId = gs_id, range = 'A:Z',
                                    body = body, valueInputOption = 'RAW').execute()
 
 
-def open_google():
-    open_url(_GS_BASE_URL + _GS_ID)
+def open_google(gs_id):
+    open_url(_GS_BASE_URL + gs_id)
 
 
 def google_row_for_record(record):
@@ -178,5 +177,5 @@ def google_row_for_record(record):
     g = record.item_location_code
     h = record.caltech_holdit_user
     i = record.caltech_status
-    # FIXME: should do status & staff initial
-    return [a, b, c, d, e, f, g, h, i]
+    j = record.caltech_staff_initials
+    return [a, b, c, d, e, f, g, h, i, j]
