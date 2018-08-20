@@ -46,7 +46,7 @@ class MessageHandlerCLI():
 
 
     def msg(self, text, details = '', severity = 'info'):
-        msg(text + '\n' + details, severity, self.colorize)
+        msg(text, severity, self.colorize)
 
 
     def yes_no(self, question):
