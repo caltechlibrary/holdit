@@ -52,8 +52,8 @@ def rename_existing(file, notifier):
         except:
             return
         notifier.msg('Renamed existing file "{}" to "{}"'.format(f, backup),
-                     'To avoid overwriting the existing file "{}", '
-                     + 'it has been renamed to "{}"'.format(f, backup),
+                     'To avoid overwriting the existing file "{}", '.format(f)
+                     + 'it has been renamed to "{}"'.format(backup),
                      'info')
 
     if path.exists(file):
