@@ -151,18 +151,17 @@ def tind_json(access_handler, notifier):
         login_data = sso_login_data(user, pswd)
         next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
         res = session.post(next_url, data = login_data, allow_redirects = True)
-        if str(res.content).find('Forgot your password') > 0:
+        logged_in = str(res.content).find('Forgot your password') <= 0:
+        if not logged_in:
             if notifier.yes_no('Incorrect login. Try again?'):
                 user, pswd = access_handler.name_and_password()
             else:
                 raise UserCancelled
-        else:
-            logged_in = True
 
     # Extract the SAML data and follow through with the action url.
     # This is needed to get the necessary cookies into the session object.
     tree = html.fromstring(res.content)
-    if not tree.xpath('//form[@action]'):
+    if not tree or not tree.xpath('//form[@action]'):
         details = 'Caltech Shib access result does not have expected form'
         notifier.msg('Unexpected network result -- please inform developers',
                      details, 'fatal')
