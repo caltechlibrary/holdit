@@ -19,9 +19,6 @@ from holdit.files import open_url
 # If you change this scope, delete the token file and let it be recreated.
 _OAUTH_SCOPE = 'https://www.googleapis.com/auth/spreadsheets'
 
-# Where the OAuth token is stored.
-_OAUTH_TOKEN_STORE = 'token.json'
-
 # Where to find the configuration file provided by the Google Sheets API.
 _CREDENTIALS_STORE = 'credentials.json'
 
