@@ -1,6 +1,46 @@
 '''
 __main__: main command-line interface to Holdit!
 
+Holdit! generates a printable Word document containing recent hold requests and
+also update the relevant Google spreadsheet used for tracking requests.
+
+By default, Holdit! uses a GUI dialog to get the user's Caltech access login
+name and password.  If the -G option is given (/G on Windows), it will not
+use a GUI dialog, and will instead use the operating system's
+keyring/keychain functionality to get a user name and password.  If the
+information does not exist from a previous run of Holdit!, it will query the
+user interactively for the user name and password, and (unless the -K or /K
+argument is given) store them in the user's keyring/keychain so that it does
+not have to ask again in the future.  It is also possible to supply the
+information directly on the command line using the -u and -p options (or /u
+and /p on Windows), but this is discouraged because it is insecure on
+multiuser computer systems.
+
+To reset the user name and password (e.g., if a mistake was made the last
+time and the wrong credentials were stored in the keyring/keychain system),
+use the -R (or /R on Windows) command-line argument to a command.  This
+argument will make Holdit! query for the user name and password again even if
+an entry already exists in the keyring or keychain.
+
+By default, Holdit! looks for a .docx file named "template.docx" in the
+directory where Holdit! is located, and uses that as the template for record
+printing.  If given the -t option followed by a file name (/t on Windows), it
+will look for the named file instead.  If it is not given an explicit
+template file and it cannot find a file "template.docx", Holdit! will use a
+built-in default template file.
+
+By default, Holdit! will also open the Google spreadsheet used by the
+Circulation staff to track hold requests.  This action is inhibited if given
+the -S option (/S on Windows).  The Google spreadsheet is always updated in
+any case.
+
+Holdit! will write the output to a file named "holds_print_list.docx" in the
+user's Desktop directory, unless the -o option (/o on Windows) is given with
+an explicit file path to use instead.
+
+If given the -V option (/V on Windows), this program will print version
+information and exit without doing anything else.
+
 Authors
 -------
 
@@ -46,13 +86,14 @@ from holdit.exceptions import *
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
     no_sheet   = ('do not open the spreadsheet (default: open it)',  'flag',   'S'),
     reset      = ('reset keyring stored user name and password',     'flag',   'R'),
+    test       = ('run test only, returning a fixed result',         'flag',   'T'),
     version    = ('print version info and exit',                     'flag',   'V'),
 )
 
 def main(user = 'U', pswd = 'P', output='O', template='F',
          no_color=False, no_gui=False, no_keyring=False, no_sheet=False,
-         reset=False, version=False):
-    '''Generate a printable Word document containing recent hold requests and
+         reset=False, test=False, version=False):
+    '''Generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
 By default, Holdit! uses a GUI dialog to get the user's Caltech access login
@@ -156,6 +197,8 @@ information and exit without doing anything else.
         google_records = records_from_google(spreadsheet_id, notifier)
         missing_records = records_diff(google_records, tind_records)
         new_records = list(filter(records_filter('all'), missing_records))
+        if test:
+            new_records = [google_records[0], google_records[1]]
 
         if len(new_records) > 0:
             # Update the spreadsheet with new records.
