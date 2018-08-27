@@ -4,7 +4,8 @@ google_sheet.py: code for interacting with the Google spreadsheet for Holds
 
 from apiclient.discovery import build
 from httplib2 import Http
-from oauth2client import file as oauth_file, client, tools
+from oauth2client import client, tools
+from oauth2client.contrib.keyring_storage import Storage as token_storage
 
 import holdit
 from holdit.exceptions import *
@@ -65,8 +66,8 @@ class GoogleHoldRecord(HoldRecord):
 # The following credentials and connection code is based on the Google examples
 # found at https://developers.google.com/sheets/api/quickstart/python
 
-def records_from_google(gs_id, message_handler):
-    spreadsheet_rows = spreadsheet_content(gs_id)
+def records_from_google(gs_id, message_handler, user):
+    spreadsheet_rows = spreadsheet_content(gs_id, user)
     if spreadsheet_rows == []:
         return []
     # First row is the title row.
@@ -129,8 +130,8 @@ def records_from_google(gs_id, message_handler):
     return results
 
 
-def spreadsheet_credentials():
-    store = oauth_file.Storage(_OAUTH_TOKEN_STORE)
+def spreadsheet_credentials(user):
+    store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(_CREDENTIALS_STORE, _OAUTH_SCOPE)
@@ -138,8 +139,8 @@ def spreadsheet_credentials():
     return creds
 
 
-def spreadsheet_content(gs_id):
-    creds = spreadsheet_credentials()
+def spreadsheet_content(gs_id, user):
+    creds = spreadsheet_credentials(user)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     # If you don't supply a sheet name in the range arg, you get 1st sheet.
@@ -155,7 +156,7 @@ def update_google(gs_id, records, message_handler, user):
         data.append(google_row_for_record(record))
     if not data:
         return
-    creds = spreadsheet_credentials()
+    creds = spreadsheet_credentials(user)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
