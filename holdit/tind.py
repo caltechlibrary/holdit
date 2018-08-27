@@ -151,7 +151,7 @@ def tind_json(access_handler, notifier):
         login_data = sso_login_data(user, pswd)
         next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
         res = session.post(next_url, data = login_data, allow_redirects = True)
-        logged_in = str(res.content).find('Forgot your password') <= 0:
+        logged_in = bool(str(res.content).find('Forgot your password') <= 0)
         if not logged_in:
             if notifier.yes_no('Incorrect login. Try again?'):
                 user, pswd = access_handler.name_and_password()
