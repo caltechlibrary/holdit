@@ -73,6 +73,15 @@ The Word document is created from a template Word file unimaginatively named `te
 | `{{current_time}}` | Now; i.e., the the time when when Holdit! generates the hold list |
 
 
+✎ Configuration
+--------------
+
+For security reasons, the files checked into the repository do not include all the data necessary to run Holdit!  Two things need to be done before Holdit! can be run from a command line or a working binary can be created.
+
+1. The value of `spreadsheet_id` in the file [holdit/holdit.ini](holdit/holdit.ini) must be set to the correct Google spreadsheet identifier.  (Namely, the identifier of the spreadsheet used by the Caltech Library circulation group to track holds.)
+2. A `credentials.json` file must be placed in the directory where Holdit! is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
+
+
 ⁇ Getting help and support
 --------------------------
 
