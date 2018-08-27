@@ -47,12 +47,13 @@ class AccessHandlerGUI():
         '''Returns a tuple of user, password.'''
         user = self.user
         pswd = self.pswd
-        if not all([user, pswd]):
-            if __debug__: log('Invoking GUI')
-            user, pswd, cancel = self._credentials_from_gui(user, pswd)
-            if cancel:
-                if __debug__: log('User initiated quit from within GUI')
-                raise UserCancelled
+
+        if __debug__: log('Invoking GUI')
+        user, pswd, cancel = self._credentials_from_gui(user, pswd)
+        if cancel:
+            if __debug__: log('User initiated quit from within GUI')
+            raise UserCancelled
+
         self.user = user
         self.pswd = pswd
         return self.user, self.pswd
