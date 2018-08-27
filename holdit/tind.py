@@ -108,6 +108,8 @@ class TindRecord(HoldRecord):
 
 def records_from_tind(access_handler, notifier):
     json_data = tind_json(access_handler, notifier)
+    if not json_data:
+        return []
     total_records = json_data['recordsTotal']
     if total_records and total_records[0][0] < 1:
         return []
@@ -127,8 +129,12 @@ def tind_json(access_handler, notifier):
     user, pswd = access_handler.name_and_password()
     if not user or not pswd:
         return None
-    with requests.Session() as session:
-        # Hack the user agent string.
+
+    # Loop the login part in case the user enters the wrong password.
+    logged_in = False
+    while not logged_in:
+        # Create a blank session and hack the user agent string.
+        session = requests.Session()
         session.headers.update( { 'user-agent': _USER_AGENT_STRING } )
 
         # Start with the full destination path + Shibboleth login component.
@@ -142,63 +148,68 @@ def tind_json(access_handler, notifier):
         # Now do the login step.
         tree = html.fromstring(res.content)
         sessionid = session.cookies.get('JSESSIONID')
+        login_data = sso_login_data(user, pswd)
         next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
-        login = {
-            'timezoneOffset'   : 0,
-            'j_username'       : user,
-            'j_password'       : pswd,
-            '_eventId_proceed' : 'Log In'
-        }
-        res = session.post(next_url, data = login, allow_redirects = True)
-        while str(res.content).find('Forgot your password') > 0:
+        res = session.post(next_url, data = login_data, allow_redirects = True)
+        if str(res.content).find('Forgot your password') > 0:
             if notifier.yes_no('Incorrect login. Try again?'):
                 user, pswd = access_handler.name_and_password()
-                res = session.post(next_url, data = login, allow_redirects = True)
             else:
                 raise UserCancelled
+        else:
+            logged_in = True
 
-        # Extract the SAML data and follow through with the action url.
-        # This is needed to get the necessary cookies into the session object.
-        tree = html.fromstring(res.content)
-        if not tree.xpath('//form[@action]'):
-            details = 'Caltech Shib access result does not have expected form'
-            notifier.msg('Unexpected network result -- please inform developers',
-                         details, 'fatal')
-            raise ServiceFailure(details)
-        next_url = tree.xpath('//form[@action]')[0].action
-        SAMLResponse = tree.xpath('//input[@name="SAMLResponse"]')[0].value
-        RelayState = tree.xpath('//input[@name="RelayState"]')[0].value
-        saml_payload = {'SAMLResponse': SAMLResponse, 'RelayState': RelayState}
-        res = session.post(next_url, data = saml_payload, allow_redirects = True)
-        if res.status_code != 200:
-            details = 'tind.io action post returned status {}'.format(res.status_code)
-            notifier.msg('Caltech.tind.io circulation page failed to respond',
-                         details, 'fatal')
-            raise ServiceFailure(details)
+    # Extract the SAML data and follow through with the action url.
+    # This is needed to get the necessary cookies into the session object.
+    tree = html.fromstring(res.content)
+    if not tree.xpath('//form[@action]'):
+        details = 'Caltech Shib access result does not have expected form'
+        notifier.msg('Unexpected network result -- please inform developers',
+                     details, 'fatal')
+        raise ServiceFailure(details)
+    next_url = tree.xpath('//form[@action]')[0].action
+    SAMLResponse = tree.xpath('//input[@name="SAMLResponse"]')[0].value
+    RelayState = tree.xpath('//input[@name="RelayState"]')[0].value
+    saml_payload = {'SAMLResponse': SAMLResponse, 'RelayState': RelayState}
+    res = session.post(next_url, data = saml_payload, allow_redirects = True)
+    if res.status_code != 200:
+        details = 'tind.io action post returned status {}'.format(res.status_code)
+        notifier.msg('Caltech.tind.io circulation page failed to respond',
+                     details, 'fatal')
+        raise ServiceFailure(details)
 
-        # At this point, the session object has Invenio session cookies and
-        # Shibboleth IDP session data.  We also have the TIND page we want,
-        # but there's a catch: the TIND page contains a table that is filled
-        # in using AJAX.  The table in the HTML we have at this point is
-        # empty!  We need to fake the AJAX call to retrieve the data that is
-        # used by TIND's javascript (in their bibcirculation.js) to fill in
-        # the table.  I found this gnarly URL by studying the network
-        # requests made by the page when it's loaded.
+    # At this point, the session object has Invenio session cookies and
+    # Shibboleth IDP session data.  We also have the TIND page we want,
+    # but there's a catch: the TIND page contains a table that is filled
+    # in using AJAX.  The table in the HTML we have at this point is
+    # empty!  We need to fake the AJAX call to retrieve the data that is
+    # used by TIND's javascript (in their bibcirculation.js) to fill in
+    # the table.  I found this gnarly URL by studying the network
+    # requests made by the page when it's loaded.
 
-        ajax_url = 'https://caltech.tind.io/admin2/bibcirculation/requests?draw=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=100&search%5Bvalue%5D=&search%5Bregex%5D=false&sort=request_date&sort_dir=asc'
-        ajax_headers = {"X-Requested-With": "XMLHttpRequest",
-                        "User-Agent": _USER_AGENT_STRING}
-        res = session.get(ajax_url, headers = ajax_headers)
-        if res.status_code != 200:
-            details = 'tind.io ajax get returned status {}'.format(res.status_code)
-            notifier.msg('Caltech.tind.io failed to return hold data',
-                         details, 'fatal')
-            raise ServiceFailure(details)
-        decoded = res.content.decode('utf-8')
-        json_data = json.loads(decoded)
-        if 'recordsTotal' not in json_data:
-            details = 'Could not find a "recordsTotal" field in returned data'
-            notifier.msg('Caltech.tind.io return results that we could not intepret',
-                         details, 'fatal')
-            raise ServiceFailure(details)
-        return json_data
+    ajax_url = 'https://caltech.tind.io/admin2/bibcirculation/requests?draw=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=100&search%5Bvalue%5D=&search%5Bregex%5D=false&sort=request_date&sort_dir=asc'
+    ajax_headers = {"X-Requested-With": "XMLHttpRequest",
+                    "User-Agent": _USER_AGENT_STRING}
+    res = session.get(ajax_url, headers = ajax_headers)
+    if res.status_code != 200:
+        details = 'tind.io ajax get returned status {}'.format(res.status_code)
+        notifier.msg('Caltech.tind.io failed to return hold data',
+                     details, 'fatal')
+        raise ServiceFailure(details)
+    decoded = res.content.decode('utf-8')
+    json_data = json.loads(decoded)
+    if 'recordsTotal' not in json_data:
+        details = 'Could not find a "recordsTotal" field in returned data'
+        notifier.msg('Caltech.tind.io return results that we could not intepret',
+                     details, 'fatal')
+        raise ServiceFailure(details)
+    return json_data
+
+
+def sso_login_data(user, pswd):
+    return {
+        'timezoneOffset'   : 0,
+        'j_username'       : user,
+        'j_password'       : pswd,
+        '_eventId_proceed' : 'Log In'
+    }
