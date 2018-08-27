@@ -194,7 +194,7 @@ information and exit without doing anything else.
         # Get the data.
         spreadsheet_id = config.get('holdit', 'spreadsheet_id')
         tind_records = records_from_tind(accesser, notifier)
-        google_records = records_from_google(spreadsheet_id, notifier)
+        google_records = records_from_google(spreadsheet_id, notifier, accesser.user)
         missing_records = records_diff(google_records, tind_records)
         new_records = list(filter(records_filter('all'), missing_records))
         if test:
