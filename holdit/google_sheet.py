@@ -6,11 +6,12 @@ from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import client, tools
 from oauth2client.contrib.keyring_storage import Storage as token_storage
+from os import path
 
 import holdit
 from holdit.exceptions import *
 from holdit.records import HoldRecord
-from holdit.files import open_url
+from holdit.files import open_url, datadir_path
 
 
 # Global constants.
@@ -20,7 +21,7 @@ from holdit.files import open_url
 _OAUTH_SCOPE = 'https://www.googleapis.com/auth/spreadsheets'
 
 # Where to find the configuration file provided by the Google Sheets API.
-_CREDENTIALS_STORE = 'credentials.json'
+_SECRETS_FILE = 'client_secrets.json'
 
 # Set this to a safe spreadsheet when testing, then change this value to the
 # actual spreadsheet when moving to production.
@@ -131,7 +132,8 @@ def spreadsheet_credentials(user):
     store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets(_CREDENTIALS_STORE, _OAUTH_SCOPE)
+        secrets_file = path.join(datadir_path(), _SECRETS_FILE)
+        flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         creds = tools.run_flow(flow, store)
     return creds
 
