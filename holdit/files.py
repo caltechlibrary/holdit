@@ -43,6 +43,11 @@ def desktop_path():
         return path.join(path.join(path.expanduser('~')), 'Desktop')
 
 
+def datadir_path():
+    '''Returns the path to Holdit's internal data directory.'''
+    return path.join(module_path(), 'data')
+
+
 def rename_existing(file, notifier):
     def rename(f):
         backup = f + '.bak'
