@@ -66,7 +66,7 @@ def normal_template():
     '''
     template = os.path.join(holdit_path(), 'template.docx')
     if not readable(template):
-        template = os.path.join(module_path(), _DEFAULT_TEMPLATE)
+        template = os.path.join(datadir_path(), _DEFAULT_TEMPLATE)
     return template
 
 
