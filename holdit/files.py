@@ -49,6 +49,9 @@ def datadir_path():
 
 
 def rename_existing(file, notifier):
+    '''Renames 'file' to 'file.bak'.  Uses a notifier class to provide info
+    about what it does.'''
+
     def rename(f):
         backup = f + '.bak'
         # If we fail, we just give up instead of throwing an exception.
@@ -82,4 +85,6 @@ def open_file(file):
 
 
 def open_url(url):
+    '''Open the given 'url' in a web browser using the current platform's
+    default approach.'''
     webbrowser.open(url)

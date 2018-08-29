@@ -7,6 +7,8 @@ records.py: base record class for holding data
 # .............................................................................
 
 class HoldRecord(object):
+    '''Base class for records describing a hold request.'''
+
     requester_name = ''               # String
     requester_type = ''               # String
     requester_url = ''                # String
@@ -53,7 +55,8 @@ def records_filter(method = 'all'):
     depending on whether the record should be included in the output.  This
     is meant to be passed to Python filter() as the test function.
     '''
-    # FIXME
+    # FIXME. It seemed like it might be useful to provide filtering features
+    # in the future, but this is currently a no-op.
     return (lambda x: True)
 
 

@@ -66,7 +66,7 @@ from holdit.config import Config
 from holdit.records import records_diff, records_filter
 from holdit.tind import records_from_tind
 from holdit.google_sheet import records_from_google, update_google, open_google
-from holdit.generate import generate_printable_doc
+from holdit.generate import printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
 from holdit.files import readable, open_file, rename_existing, desktop_path, module_path
@@ -207,7 +207,7 @@ information and exit without doing anything else.
             if not output:
                 output = path.join(desktop_path(), "holds_print_list.docx")
             rename_existing(output, notifier)
-            result = generate_printable_doc(new_records, template_file)
+            result = printable_doc(new_records, template_file)
             result.save(output)
             open_file(output)
         else:
