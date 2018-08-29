@@ -32,6 +32,8 @@ _GS_BASE_URL = 'https://docs.google.com/spreadsheets/d/'
 # .............................................................................
 
 class GoogleHoldRecord(HoldRecord):
+    '''Class to represent a hold request as it appears in the spreadsheet.'''
+
     caltech_status = ''
     caltech_staff_initials = ''
     caltech_holdit_user = ''
@@ -135,6 +137,8 @@ def spreadsheet_credentials(user):
         secrets_file = path.join(datadir_path(), _SECRETS_FILE)
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         creds = tools.run_flow(flow, store)
+    if not creds:
+        raise InternalError('Failed to get Google API token')
     return creds
 
 
@@ -157,6 +161,8 @@ def update_google(gs_id, records, message_handler, user):
         return
     creds = spreadsheet_credentials(user)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
+    if not service:
+        raise InternalError('Unable to connect to Google spreadsheet service')
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
     result = sheets_service.append(spreadsheetId = gs_id,
