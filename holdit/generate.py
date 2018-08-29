@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 import holdit
-from holdit.files import holdit_path, module_path, readable
+from holdit.files import holdit_path, module_path, readable, datadir_path
 from holdit.exceptions import InternalError
 
 
