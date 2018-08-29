@@ -161,7 +161,7 @@ def tind_json(access_handler, notifier):
     # Extract the SAML data and follow through with the action url.
     # This is needed to get the necessary cookies into the session object.
     tree = html.fromstring(res.content)
-    if not tree or not tree.xpath('//form[@action]'):
+    if tree is None or tree.xpath('//form[@action]') is None:
         details = 'Caltech Shib access result does not have expected form'
         notifier.msg('Unexpected network result -- please inform developers',
                      details, 'fatal')
