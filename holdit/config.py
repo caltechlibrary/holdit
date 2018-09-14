@@ -17,9 +17,7 @@ from holdit.files import module_path
 class Config():
     '''A class to encapsulate reading our configuration file.'''
 
-    _default_config_file = path.join(module_path(), "holdit.ini")
-
-    def __init__(self, cfg_file=_default_config_file):
+    def __init__(self, cfg_file):
         self._cfg = ConfigParser()
         try:
             with open(cfg_file) as f:

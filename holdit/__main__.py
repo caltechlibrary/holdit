@@ -170,7 +170,7 @@ information and exit without doing anything else.
         msg('Warning: reset flag ignored when using GUI', 'warn', use_color)
 
     try:
-        config = Config()
+        config = Config(path.join(module_path(), "holdit.ini"))
         if use_gui:
             accesser = AccessHandlerGUI(user, pswd)
             notifier = MessageHandlerGUI()
