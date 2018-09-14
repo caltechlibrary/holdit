@@ -178,6 +178,15 @@ class MainFrame(wx.Frame):
         accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('W'), close_id )])
         self.SetAcceleratorTable(accel_tbl)
 
+        # Create a simple menu bar.
+        self.menuBar = wx.MenuBar(0)
+        self.fileMenu = wx.Menu()
+        self.exit = wx.MenuItem(self.fileMenu, wx.ID_EXIT,
+                                "Exit"+ "\t" + "Alt+F4",
+                                wx.EmptyString, wx.ITEM_NORMAL)
+        self.fileMenu.Append(self.exit)
+        self.SetMenuBar(self.menuBar)
+
 
     def __set_properties(self):
         self.SetTitle("Holdit!")
