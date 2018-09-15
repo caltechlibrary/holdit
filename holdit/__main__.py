@@ -59,6 +59,7 @@ import os
 import os.path as path
 import plac
 import sys
+import traceback
 
 import holdit
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
@@ -238,7 +239,7 @@ information and exit without doing anything else.
         sys.exit()
     except Exception as err:
         notifier.msg(holdit.__title__ + ' encountered an error',
-                     str(err), 'fatal')
+                     str(err) + '\n' + traceback.format_exc(), 'fatal')
     if no_gui:
         msg('Done.', 'info', use_color)
 
