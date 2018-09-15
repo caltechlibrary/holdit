@@ -39,29 +39,38 @@ The name of the keyring used to store Caltech access credentials, if any.
 # Exported interfaces to different approaches to getting credentials.
 # .............................................................................
 
-class AccessHandlerGUI():
-    '''Use a GUI to ask the user for credentials.'''
-
-    def __init__(self, user = None, pswd = None):
+class AccessHandlerBase():
+    def __init__(self, the_user = None, the_pswd = None):
         '''Initialize internal data with user and password if available.'''
-        self.user = user
-        self.pswd = pswd
+        self._user = the_user
+        self._pswd = the_pswd
 
+    @property
+    def user(self):
+        return self._user
+
+    @property
+    def pswd(self):
+        return self._pswd
+
+
+class AccessHandlerGUI(AccessHandlerBase):
+    '''Use a GUI to ask the user for credentials.'''
 
     def name_and_password(self):
         '''Returns a tuple of user, password.'''
-        user = self.user
-        pswd = self.pswd
+        tmp_user = self._user
+        tmp_pswd = self._pswd
 
         if __debug__: log('Invoking GUI')
-        user, pswd, cancel = self._credentials_from_gui(user, pswd)
+        tmp_user, tmp_pswd, cancel = self._credentials_from_gui(tmp_user, tmp_pswd)
         if cancel:
             if __debug__: log('User initiated quit from within GUI')
             raise UserCancelled
 
-        self.user = user
-        self.pswd = pswd
-        return self.user, self.pswd
+        self._user = tmp_user
+        self._pswd = tmp_pswd
+        return self._user, self._pswd
 
 
     def _credentials_from_gui(self, user, pswd):
@@ -71,40 +80,39 @@ class AccessHandlerGUI():
         return gui.final_values()
 
 
-class AccessHandlerCLI():
-    def __init__(self, user = None, pswd = None, use_keyring = True, reset = False):
+class AccessHandlerCLI(AccessHandlerBase):
+    def __init__(self, the_user = None, the_pswd = None, use_keyring = True, reset = False):
         '''Initialize internal data with user and password if available.'''
-        self.user = user
-        self.pswd = pswd
-        self.use_keyring = use_keyring
-        self.reset = reset
+        super().__init__(the_user, the_pswd)
+        self._use_keyring = use_keyring
+        self._reset = reset
 
 
     def name_and_password(self):
         '''Returns a tuple of user, password.'''
-        user = self.user
-        pswd = self.pswd
-        if not all([user, pswd]) or self.reset or self.no_keyring:
-            if self.use_keyring and not self.reset:
+        tmp_user = self._user
+        tmp_pswd = self._pswd
+        if not all([tmp_user, tmp_pswd]) or self._reset or not self._use_keyring:
+            if self._use_keyring and not self._reset:
                 if __debug__: log('Getting credentials from keyring')
-                user, pswd, _, _ = credentials(_KEYRING, "Caltech access login",
-                                               user, pswd)
+                tmp_user, tmp_pswd, _, _ = credentials(_KEYRING, "Caltech access login",
+                                                       tmp_user, tmp_pswd)
             else:
-                if not self.use_keyring:
+                if not self._use_keyring:
                     if __debug__: log('Keyring disabled')
-                if self.reset:
+                if self._reset:
                     if __debug__: log('Reset invoked')
-                user = input('Caltech access login: ')
-                pswd = password('Password for "{}": '.format(user))
-            if self.use_keyring:
+                tmp_user = input('Caltech access login: ')
+                tmp_pswd = password('Password for "{}": '.format(tmp_user))
+            if self._use_keyring:
                 # Save the credentials if they're different.
                 s_user, s_pswd, _, _ = keyring_credentials(_KEYRING)
-                if s_user != user or s_pswd != pswd:
+                if s_user != tmp_user or s_pswd != tmp_pswd:
                     if __debug__: log('Saving credentials to keyring')
-                    save_keyring_credentials(_KEYRING, user, pswd)
-        self.user = user
-        self.pswd = pswd
-        return self.user, self.pswd
+                    save_keyring_credentials(_KEYRING, tmp_user, tmp_pswd)
+        self._user = tmp_user
+        self._pswd = tmp_pswd
+        return self._user, self._pswd
 
 
 # Internal implementation classes for login GUI.
