@@ -8,6 +8,7 @@ import wx
 import wx.adv
 import textwrap
 import webbrowser
+import sys
 
 import holdit
 from holdit.credentials import password, credentials
@@ -172,15 +173,24 @@ class MainFrame(wx.Frame):
         # Create a simple menu bar.
         self.menuBar = wx.MenuBar(0)
 
+        # Add a "File" menu with a quit item.
+        self.fileMenu = wx.Menu()
+        self.exitItem = wx.MenuItem(self.fileMenu, wx.ID_EXIT, "&Exit",
+                                    wx.EmptyString, wx.ITEM_NORMAL)
+        self.fileMenu.Append(self.exitItem)
+        if sys.platform.startswith('win'):
+            # Only need to add a File menu on Windows.  On Macs, wxPython
+            # automatically puts the wx.ID_EXIT item under the app menu.
+            self.menuBar.Append(self.fileMenu, "&File")
+
         # Add a "help" menu bar item.
         self.helpMenu = wx.Menu()
-        self.helpItem = wx.MenuItem(self.helpMenu, wx.ID_HELP,
-                                    holdit.__name__ + " Help",
+        self.helpItem = wx.MenuItem(self.helpMenu, wx.ID_HELP, "&Help",
                                     wx.EmptyString, wx.ITEM_NORMAL)
         self.helpMenu.Append(self.helpItem)
         self.helpMenu.AppendSeparator()
         self.aboutItem = wx.MenuItem(self.helpMenu, wx.ID_ABOUT,
-                                     "About " + holdit.__name__,
+                                     "&About " + holdit.__name__,
                                      wx.EmptyString, wx.ITEM_NORMAL)
         self.helpMenu.Append(self.aboutItem)
         self.menuBar.Append(self.helpMenu, "Help")
@@ -189,14 +199,15 @@ class MainFrame(wx.Frame):
         self.SetMenuBar(self.menuBar)
         self.__set_properties()
         self.__do_layout()
-        self.Bind(wx.EVT_BUTTON, self.on_cancel, self.cancel_button)
+        self.Bind(wx.EVT_BUTTON, self.on_cancel_or_quit, self.cancel_button)
         self.Bind(wx.EVT_BUTTON, self.on_ok, self.ok_button)
+        self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = self.exitItem.GetId())
         self.Bind(wx.EVT_MENU, self.on_help, id = self.helpItem.GetId())
         self.Bind(wx.EVT_MENU, self.on_about, id = self.aboutItem.GetId())
-        self.Bind(wx.EVT_CLOSE, self.on_cancel)
+        self.Bind(wx.EVT_CLOSE, self.on_cancel_or_quit)
 
         close_id = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.on_cancel, id = close_id)
+        self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = close_id)
         accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('W'), close_id )])
         self.SetAcceleratorTable(accel_tbl)
 
@@ -271,7 +282,7 @@ class MainFrame(wx.Frame):
             self.complain_incomplete_values()
 
 
-    def on_cancel(self, event):
+    def on_cancel_or_quit(self, event):
         dialog = wx.MessageDialog(self, caption = "Quit?",
                                   message = "Are you sure you want to quit?",
                                   style = wx.YES_NO | wx.ICON_WARNING,
@@ -294,7 +305,7 @@ class MainFrame(wx.Frame):
     def on_escape(self, event):
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
-            self.on_cancel(event)
+            self.on_cancel_or_quit(event)
         else:
             event.Skip()
 
@@ -304,7 +315,7 @@ class MainFrame(wx.Frame):
         if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_SPACE]:
             self.on_ok(event)
         elif keycode == wx.WXK_ESCAPE:
-            self.on_cancel(event)
+            self.on_cancel_or_quit(event)
         else:
             event.EventObject.Navigate()
 
@@ -321,7 +332,7 @@ class MainFrame(wx.Frame):
         elif keycode == wx.WXK_TAB:
             event.EventObject.Navigate()
         elif keycode == wx.WXK_ESCAPE:
-            self.on_cancel(event)
+            self.on_cancel_or_quit(event)
         else:
             event.Skip()
 
