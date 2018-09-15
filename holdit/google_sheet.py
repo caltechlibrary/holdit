@@ -34,12 +34,13 @@ _GS_BASE_URL = 'https://docs.google.com/spreadsheets/d/'
 class GoogleHoldRecord(HoldRecord):
     '''Class to represent a hold request as it appears in the spreadsheet.'''
 
-    caltech_status = ''
-    caltech_staff_initials = ''
-    caltech_holdit_user = ''
-
     def __init__(self, record = None):
         '''Initialize using a TindRecord.'''
+
+        super().__init__()
+        self.caltech_status = ''
+        self.caltech_staff_initials = ''
+        self.caltech_holdit_user = ''
         if record:
             self.requester_name        = record.requester_name
             self.requester_type        = record.requester_type
@@ -160,7 +161,7 @@ def update_google(gs_id, records, user, message_handler):
         data.append(google_row_for_record(record))
     if not data:
         return
-    creds = spreadsheet_credentials(user)
+    creds = spreadsheet_credentials(user, message_handler)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     if not service:
         message_handler.msg('Unable to connect to Google spreadsheet service',

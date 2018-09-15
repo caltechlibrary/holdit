@@ -9,26 +9,27 @@ records.py: base record class for holding data
 class HoldRecord(object):
     '''Base class for records describing a hold request.'''
 
-    requester_name = ''               # String
-    requester_type = ''               # String
-    requester_url = ''                # String
+    def __init__(self):
+        self.requester_name = ''               # String
+        self.requester_type = ''               # String
+        self.requester_url = ''                # String
 
-    item_title = ''                   # String
-    item_details_url = ''             # String
-    item_record_url = ''              # String
-    item_call_number = ''
-    item_barcode = ''
-    item_location_name = ''           # String
-    item_location_code = ''           # String
-    item_loan_status = ''             # String
-    item_loan_url = ''                # String
+        self.item_title = ''                   # String
+        self.item_details_url = ''             # String
+        self.item_record_url = ''              # String
+        self.item_call_number = ''
+        self.item_barcode = ''
+        self.item_location_name = ''           # String
+        self.item_location_code = ''           # String
+        self.item_loan_status = ''             # String
+        self.item_loan_url = ''                # String
 
-    date_requested = ''               # String (date)
-    date_due = ''                     # String (date)
-    date_last_notice_sent = ''        # String (date)
-    overdue_notices_count = ''        # String
+        self.date_requested = ''               # String (date)
+        self.date_due = ''                     # String (date)
+        self.date_last_notice_sent = ''        # String (date)
+        self.overdue_notices_count = ''        # String
 
-    holds_count = ''                  # String
+        self.holds_count = ''                  # String
 
 
 # Utility functions.

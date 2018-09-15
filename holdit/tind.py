@@ -33,13 +33,12 @@ The hold list URL, via the Caltech Shibboleth login.
 class TindRecord(HoldRecord):
     '''Class to store structured representations of a TIND hold request.'''
 
-    raw_json = None
-
     def __init__(self, json_record):
         '''json_record = single 'data' record from the raw json returned by
         the TIND.io ajax call.
         '''
-        raw_json = json_record
+        super().__init__()
+        self.raw_json = json_record
         self.parse_requester_details(json_record)
         self.parse_item_details(json_record)
 

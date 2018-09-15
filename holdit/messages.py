@@ -34,11 +34,9 @@ from holdit.exceptions import *
 # ......................................................................
 
 class MessageHandlerCLI():
-    colorize = True
-    on_windows = sys.platform.startswith('win')
-
     def __init__(self, use_color = True):
         self.colorize = use_color
+        self.on_windows = sys.platform.startswith('win')
 
 
     def note(self, text):

@@ -40,9 +40,6 @@ The name of the keyring used to store Caltech access credentials, if any.
 
 class AccessHandlerGUI():
     '''Use a GUI to ask the user for credentials.'''
-    user = None
-    pswd = None
-
 
     def __init__(self, user = None, pswd = None):
         '''Initialize internal data with user and password if available.'''
@@ -74,12 +71,6 @@ class AccessHandlerGUI():
 
 
 class AccessHandlerCLI():
-    user = None
-    pswd = None
-    reset = False
-    use_keyring = False
-
-
     def __init__(self, user = None, pswd = None, use_keyring = True, reset = False):
         '''Initialize internal data with user and password if available.'''
         self.user = user
@@ -127,7 +118,10 @@ class UserInputValues():
 
 class HolditGUI(wx.App):
     '''Top level class for creating and interacting with the login GUI.'''
-    values = UserInputValues()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.values = UserInputValues()
 
 
     def OnInit(self):
@@ -148,9 +142,9 @@ class HolditGUI(wx.App):
 
 
 class MainFrame(wx.Frame):
-    values = None
-
     def __init__(self, *args, **kwds):
+        self.values = None
+
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
