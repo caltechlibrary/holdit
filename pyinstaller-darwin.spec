@@ -14,7 +14,8 @@ import sys
 # The list must contain tuples: ('file', 'destination directory').
 data_files = [ ('holdit/holdit.ini', 'holdit'),
                ('holdit/data/client_secrets.json', 'holdit/data'),
-               ('holdit/data/default_template.docx', 'holdit/data') ]
+               ('holdit/data/default_template.docx', 'holdit/data'),
+               ('holdit/data/help.html', 'holdit/data') ]
 
 configuration = Analysis(['holdit/__main__.py'],
                          pathex = ['.'],
