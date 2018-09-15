@@ -14,9 +14,14 @@ import holdit
 # Main functions.
 # .............................................................................
 
-def readable(file):
-    '''Returns True if the given 'file' is accessible and readable.'''
-    return os.access(file, os.F_OK | os.R_OK)
+def readable(dest):
+    '''Returns True if the given 'dest' is accessible and readable.'''
+    return os.access(dest, os.F_OK | os.R_OK)
+
+
+def writable(dest):
+    '''Returns True if the destination is writable.'''
+    return os.access(dest, os.F_OK | os.W_OK)
 
 
 def module_path():
