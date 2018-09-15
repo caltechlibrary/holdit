@@ -69,7 +69,8 @@ from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import printable_doc
 from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
-from holdit.files import readable, open_file, rename_existing, desktop_path, module_path
+from holdit.files import readable, writable, open_file
+from holdit.files import rename_existing, desktop_path, module_path
 from holdit.exceptions import *
 
 
@@ -188,13 +189,21 @@ information and exit without doing anything else.
                 template_file = temp
             else:
                 # Use plain msg() b/c cmd line flags only available in CLI mode.
-                msg('File "{}" not not readable -- using default.'.format(template),
+                msg('File "{}" not readable -- using default.'.format(template),
                     'warn', colorize)
+
+        # Sanity check against possible screwups in creating the Holdit! app.
+        if not readable(template_file):
+            notifier.msg('Template doc file "{}" not readable'.format(template),
+                         severity = 'error')
+        if not writable(desktop_path()):
+            notifier.msg('Output folder "{}" not writable'.format(desktop_path()),
+                         severity = 'error')
 
         # Get the data.
         spreadsheet_id = config.get('holdit', 'spreadsheet_id')
         tind_records = records_from_tind(accesser, notifier)
-        google_records = records_from_google(spreadsheet_id, notifier, accesser.user)
+        google_records = records_from_google(spreadsheet_id, accesser.user, notifier)
         missing_records = records_diff(google_records, tind_records)
         new_records = list(filter(records_filter('all'), missing_records))
         if test:
@@ -202,7 +211,7 @@ information and exit without doing anything else.
 
         if len(new_records) > 0:
             # Update the spreadsheet with new records.
-            update_google(spreadsheet_id, new_records, notifier, accesser.user)
+            update_google(spreadsheet_id, new_records, accesser.user, notifier)
             # Write a printable report.
             if not output:
                 output = path.join(desktop_path(), "holds_print_list.docx")
