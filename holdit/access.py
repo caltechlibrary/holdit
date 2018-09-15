@@ -13,7 +13,7 @@ import holdit
 from holdit.credentials import password, credentials
 from holdit.credentials import keyring_credentials, save_keyring_credentials
 from holdit.exceptions import *
-from holdit.files import datadir_path
+from holdit.files import datadir_path, readable
 
 # Note: to turn on debugging, make sure python -O was *not* used to start
 # python, then set the logging level to DEBUG *before* loading this module.
@@ -356,5 +356,7 @@ class MainFrame(wx.Frame):
 
     def on_help(self, event):
         wx.BeginBusyCursor()
-        webbrowser.open_new("file://" + path.join(datadir_path(), "help.html"))
+        help_file = path.join(datadir_path(), "help.html")
+        if readable(help_file):
+            webbrowser.open_new("file://" + help_file)
         wx.EndBusyCursor()
