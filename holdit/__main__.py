@@ -162,23 +162,26 @@ information and exit without doing anything else.
         print('License: {}'.format(holdit.__license__))
         sys.exit()
 
+    # Switch between different ways of getting information from/to the user.
+    if use_gui:
+        accesser = AccessHandlerGUI(user, pswd)
+        notifier = MessageHandlerGUI()
+    else:
+        accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
+        notifier = MessageHandlerCLI(use_color)
+
+    # Final sanity checks before doing the real work.
     if use_gui and no_keyring:
         msg('Warning: keyring flag ignored when using GUI', 'warn', use_color)
     if use_gui and reset:
         msg('Warning: reset flag ignored when using GUI', 'warn', use_color)
+    if not network_available():
+        notifier.msg('No network connection.', severity = 'fatal')
+        sys.exit()
 
+    # Let's do this thing.
     try:
         config = Config(path.join(module_path(), "holdit.ini"))
-        if use_gui:
-            accesser = AccessHandlerGUI(user, pswd)
-            notifier = MessageHandlerGUI()
-        else:
-            accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
-            notifier = MessageHandlerCLI(use_color)
-
-        if not network_available():
-            notifier.msg('No network connection.', severity = 'fatal')
-            sys.exit()
 
         # The default template is expected to be inside the Holdit module.
         # If the user supplies a template, we use it instead.
@@ -233,6 +236,9 @@ information and exit without doing anything else.
         if no_gui:
             msg('Quitting.', 'warn', use_color)
         sys.exit()
+    except Exception as err:
+        notifier.msg(holdit.__title__ + ' encountered an error',
+                     str(err), 'fatal')
     if no_gui:
         msg('Done.', 'info', use_color)
 
