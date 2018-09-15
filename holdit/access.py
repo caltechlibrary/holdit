@@ -2,11 +2,18 @@
 access.py: code to deal with getting user access credentials
 '''
 
+import os
+import os.path as path
 import wx
+import wx.adv
+import textwrap
+import webbrowser
 
+import holdit
 from holdit.credentials import password, credentials
 from holdit.credentials import keyring_credentials, save_keyring_credentials
 from holdit.exceptions import *
+from holdit.files import datadir_path
 
 # Note: to turn on debugging, make sure python -O was *not* used to start
 # python, then set the logging level to DEBUG *before* loading this module.
@@ -148,7 +155,9 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
         self.SetSize((355, 175))
-        self.title = wx.StaticText(panel, wx.ID_ANY, "Holdit! — generate a list of hold requests", style = wx.ALIGN_CENTER)
+        self.title = wx.StaticText(panel, wx.ID_ANY,
+                                   holdit.__name__ + " — generate a list of hold requests",
+                                   style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
@@ -166,11 +175,30 @@ class MainFrame(wx.Frame):
         self.ok_button.SetDefault()
         self.ok_button.Disable()
 
+        # Create a simple menu bar.
+        self.menuBar = wx.MenuBar(0)
+
+        # Add a "help" menu bar item.
+        self.helpMenu = wx.Menu()
+        self.helpItem = wx.MenuItem(self.helpMenu, wx.ID_HELP,
+                                    holdit.__name__ + " Help",
+                                    wx.EmptyString, wx.ITEM_NORMAL)
+        self.helpMenu.Append(self.helpItem)
+        self.helpMenu.AppendSeparator()
+        self.aboutItem = wx.MenuItem(self.helpMenu, wx.ID_ABOUT,
+                                     "About " + holdit.__name__,
+                                     wx.EmptyString, wx.ITEM_NORMAL)
+        self.helpMenu.Append(self.aboutItem)
+        self.menuBar.Append(self.helpMenu, "Help")
+
+        # Put everything together and bind some keystrokes to events.
+        self.SetMenuBar(self.menuBar)
         self.__set_properties()
         self.__do_layout()
-
         self.Bind(wx.EVT_BUTTON, self.on_cancel, self.cancel_button)
         self.Bind(wx.EVT_BUTTON, self.on_ok, self.ok_button)
+        self.Bind(wx.EVT_MENU, self.on_help, id = self.helpItem.GetId())
+        self.Bind(wx.EVT_MENU, self.on_about, id = self.aboutItem.GetId())
         self.Bind(wx.EVT_CLOSE, self.on_cancel)
 
         close_id = wx.NewId()
@@ -178,18 +206,9 @@ class MainFrame(wx.Frame):
         accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('W'), close_id )])
         self.SetAcceleratorTable(accel_tbl)
 
-        # Create a simple menu bar.
-        self.menuBar = wx.MenuBar(0)
-        self.fileMenu = wx.Menu()
-        self.exit = wx.MenuItem(self.fileMenu, wx.ID_EXIT,
-                                "Exit"+ "\t" + "Alt+F4",
-                                wx.EmptyString, wx.ITEM_NORMAL)
-        self.fileMenu.Append(self.exit)
-        self.SetMenuBar(self.menuBar)
-
 
     def __set_properties(self):
-        self.SetTitle("Holdit!")
+        self.SetTitle(holdit.__name__)
         self.title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD, 0, "Arial"))
         self.top_line.SetMinSize((360, 2))
         self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
@@ -322,3 +341,20 @@ class MainFrame(wx.Frame):
         if (response == wx.ID_YES):
             self.values.cancel = True
             self.Destroy()
+
+
+    def on_about(self, event):
+        dlg = wx.adv.AboutDialogInfo()
+        dlg.SetName(holdit.__name__)
+        dlg.SetVersion(holdit.__version__)
+        dlg.SetLicense(holdit.__license__)
+        dlg.SetDescription('\n'.join(textwrap.wrap(holdit.__description__, 81)))
+        dlg.SetWebSite(holdit.__url__)
+        dlg.AddDeveloper(u"Michael Hucka (California Institute of Technology)")
+        wx.adv.AboutBox(dlg)
+
+
+    def on_help(self, event):
+        wx.BeginBusyCursor()
+        webbrowser.open_new("file://" + path.join(datadir_path(), "help.html"))
+        wx.EndBusyCursor()
