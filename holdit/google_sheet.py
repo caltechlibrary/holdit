@@ -66,8 +66,8 @@ class GoogleHoldRecord(HoldRecord):
 # The following credentials and connection code is based on the Google examples
 # found at https://developers.google.com/sheets/api/quickstart/python
 
-def records_from_google(gs_id, message_handler, user):
-    spreadsheet_rows = spreadsheet_content(gs_id, user)
+def records_from_google(gs_id, user, message_handler):
+    spreadsheet_rows = spreadsheet_content(gs_id, user, message_handler)
     if spreadsheet_rows == []:
         return []
     # First row is the title row.
@@ -130,7 +130,7 @@ def records_from_google(gs_id, message_handler, user):
     return results
 
 
-def spreadsheet_credentials(user):
+def spreadsheet_credentials(user, message_handler):
     store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
@@ -138,12 +138,13 @@ def spreadsheet_credentials(user):
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         creds = tools.run_flow(flow, store)
     if not creds:
+        message_handler.msg('Failed to get Google API token', severity = 'error')
         raise InternalError('Failed to get Google API token')
     return creds
 
 
-def spreadsheet_content(gs_id, user):
-    creds = spreadsheet_credentials(user)
+def spreadsheet_content(gs_id, user, message_handler):
+    creds = spreadsheet_credentials(user, message_handler)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
     # If you don't supply a sheet name in the range arg, you get 1st sheet.
@@ -151,7 +152,7 @@ def spreadsheet_content(gs_id, user):
     return data.get('values', [])
 
 
-def update_google(gs_id, records, message_handler, user):
+def update_google(gs_id, records, user, message_handler):
     data = []
     for record in records:
         record = GoogleHoldRecord(record)
@@ -162,7 +163,9 @@ def update_google(gs_id, records, message_handler, user):
     creds = spreadsheet_credentials(user)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     if not service:
-        raise InternalError('Unable to connect to Google spreadsheet service')
+        message_handler.msg('Unable to connect to Google spreadsheet service',
+                            severity = 'error')
+        raise InternalError()
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
     result = sheets_service.append(spreadsheetId = gs_id,
