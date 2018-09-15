@@ -89,7 +89,7 @@ class MessageHandlerGUI():
         if clicked == wx.ID_HELP:
             body = ("Holdit has encountered an error:\n"
                     + "─"*30
-                    + "\n{}\n".format(details)
+                    + "\n{}\n".format(details or text)
                     + "─"*30
                     + "\nIf the problem is due to a network timeout or "
                     + "similar transient error, then please quit and try again "
