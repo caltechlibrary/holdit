@@ -157,16 +157,19 @@ class MainFrame(wx.Frame):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
-        self.SetSize((355, 175))
+        if sys.platform.startswith('win'):
+            self.SetSize((425, 200))
+        else:
+            self.SetSize((355, 175))
         self.title = wx.StaticText(panel, wx.ID_ANY,
                                    holdit.__name__ + " — generate a list of hold requests",
                                    style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
-        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login:", style = wx.ALIGN_RIGHT)
+        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login: ", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.login.Bind(wx.EVT_TEXT, self.on_text)
-        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password:", style = wx.ALIGN_RIGHT)
+        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password: ", style = wx.ALIGN_RIGHT)
         self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PASSWORD)
         self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.password.Bind(wx.EVT_TEXT, self.on_text)
