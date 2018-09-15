@@ -10,5 +10,4 @@ def network_available():
         r = requests.get("https://www.caltech.edu")
         return True
     except requests.ConnectionError:
-        if __debug__: log('Could not connect to https://www.caltech.edu')
         return False
