@@ -162,9 +162,6 @@ information and exit without doing anything else.
         print('License: {}'.format(holdit.__license__))
         sys.exit()
 
-    # Perform general sanity checks.
-    if not network_available():
-        raise SystemExit(color('No network', 'error', use_color))
     if use_gui and no_keyring:
         msg('Warning: keyring flag ignored when using GUI', 'warn', use_color)
     if use_gui and reset:
@@ -178,6 +175,10 @@ information and exit without doing anything else.
         else:
             accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
             notifier = MessageHandlerCLI(use_color)
+
+        if not network_available():
+            notifier.msg('No network connection.', severity = 'fatal')
+            sys.exit()
 
         # The default template is expected to be inside the Holdit module.
         # If the user supplies a template, we use it instead.
@@ -193,12 +194,13 @@ information and exit without doing anything else.
                     'warn', colorize)
 
         # Sanity check against possible screwups in creating the Holdit! app.
+        # Do them here so that we can fail early if we know we can't finish.
         if not readable(template_file):
-            notifier.msg('Template doc file "{}" not readable'.format(template),
-                         severity = 'error')
+            notifier.msg('Template doc file "{}" not readable.'.format(template),
+                         severity = 'fatal')
         if not writable(desktop_path()):
-            notifier.msg('Output folder "{}" not writable'.format(desktop_path()),
-                         severity = 'error')
+            notifier.msg('Output folder "{}" not writable.'.format(desktop_path()),
+                         severity = 'fatal')
 
         # Get the data.
         spreadsheet_id = config.get('holdit', 'spreadsheet_id')
