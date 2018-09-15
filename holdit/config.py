@@ -6,6 +6,7 @@ from   configparser import ConfigParser
 import os
 from   os import path as path
 import sys
+import warnings
 
 import holdit
 from holdit.files import module_path
@@ -23,7 +24,7 @@ class Config():
             with open(cfg_file) as f:
                 self._cfg.readfp(f)
         except IOError:
-            raise RuntimeError('file "{}" not found'.format(cfg_file))
+            warnings.warn('file "{}" not found'.format(cfg_file))
 
 
     def get(self, section, prop):
@@ -32,7 +33,9 @@ class Config():
            * value of section is an integer => section named after host
            * value of section is a string => literal section name
         '''
-        if isinstance(section, str):
+        if not self._cfg:
+            return None
+        elif isinstance(section, str):
             return self._cfg.get(section, prop)
         elif isinstance(section, int):
             section_name = Host.name(section)
@@ -48,7 +51,9 @@ class Config():
            * value of section is an integer => section named after host
            * value of section is a string => literal section name
         '''
-        if isinstance(section, str):
+        if not self._cfg:
+            return None
+        elif isinstance(section, str):
             return self._cfg.items(section)
         elif isinstance(section, int):
             section_name = Host.name(section)
