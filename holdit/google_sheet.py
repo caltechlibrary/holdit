@@ -7,6 +7,17 @@ from httplib2 import Http
 from oauth2client import client, tools
 from oauth2client.contrib.keyring_storage import Storage as token_storage
 from os import path
+import sys
+
+# oauth2client library loads keyring but does not set a backend, which
+# leads to a run-time error in the PyInstaller-produced app.
+import keyring
+if sys.platform.startswith('darwin'):
+    import keyring.backends.OS_X
+    keyring.set_keyring(keyring.backends.OS_X.Keyring())
+elif sys.platform.startswith('win'):
+    import keyring.backends.Windows
+    keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
 
 import holdit
 from holdit.exceptions import *
