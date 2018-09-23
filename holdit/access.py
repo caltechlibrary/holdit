@@ -294,16 +294,8 @@ class MainFrame(wx.Frame):
 
 
     def on_cancel_or_quit(self, event):
-        dialog = wx.MessageDialog(self, caption = "Quit?",
-                                  message = "Are you sure you want to quit?",
-                                  style = wx.YES_NO | wx.ICON_WARNING,
-                                  pos = wx.DefaultPosition)
-        response = dialog.ShowModal()
-        if (response == wx.ID_YES):
-            self.values.cancel = True
-            self.Destroy()
-        else:
-            event.StopPropagation()
+        self.values.cancel = True
+        self.Destroy()
 
 
     def on_text(self, event):
