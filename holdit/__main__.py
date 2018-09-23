@@ -199,8 +199,10 @@ information and exit without doing anything else.
         # Do them here so that we can fail early if we know we can't finish.
         if not readable(template_file):
             notifier.fatal('Template doc file "{}" not readable.'.format(template_file))
+            sys.exit()
         if not writable(desktop_path()):
             notifier.fatal('Output folder "{}" not writable.'.format(desktop_path()))
+            sys.exit()
 
         # Get the data.
         spreadsheet_id = config.get('holdit', 'spreadsheet_id')
@@ -234,7 +236,7 @@ information and exit without doing anything else.
             notifier.warn('Quitting.')
         sys.exit()
     except Exception as err:
-        notifier.error(holdit.__title__ + ' encountered an error',
+        notifier.fatal(holdit.__title__ + ' encountered an error',
                        str(err) + '\n' + traceback.format_exc())
     if no_gui:
         notifier.info('Done.')
