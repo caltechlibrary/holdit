@@ -47,6 +47,22 @@ class MessageHandlerCLI():
         msg(text, severity, self.colorize)
 
 
+    def info(self, text, details = ''):
+        msg(text, 'info', self.colorize)
+
+
+    def warn(self, text, details = ''):
+        msg('Warning: ' + text, 'warn', self.colorize)
+
+
+    def error(self, text, details = ''):
+        msg('Error: ' + text, 'error', self.colorize)
+
+
+    def fatal(self, text, details = ''):
+        msg('FATAL: ' + text, 'fatal', self.colorize)
+
+
     def yes_no(self, question):
         return input("{} (y/n) ".format(question)).startswith(('y', 'Y'))
 
@@ -105,6 +121,22 @@ class MessageHandlerGUI():
             raise UserCancelled
         else:
             dlg.Destroy()
+
+
+    def info(self, text, details = ''):
+        self.msg(text, details, 'info')
+
+
+    def warn(self, text, details = ''):
+        self.msg(text, details, 'warn')
+
+
+    def error(self, text, details = ''):
+        self.msg(text, details, 'error')
+
+
+    def fatal(self, text, details = ''):
+        self.msg(text, details, 'fatal')
 
 
     def yes_no(self, question):
