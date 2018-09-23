@@ -109,26 +109,22 @@ def records_from_tind(access_handler, notifier):
     json_data = tind_json(access_handler, notifier)
     if not json_data:
         return []
-    total_records = json_data['recordsTotal']
-    if total_records and total_records[0][0] < 1:
-        return []
-    num_records = total_records[0][0]
+    records_data = json_data['recordsTotal']
+    if records_data:
+        num_records = records_data[0][0]
+        if num_records < 1:
+            return []
     records = []
     for json_record in json_data['data']:
         tr = TindRecord(json_record)
         # Special hack: the way the holds are being done with Tind, we only
         # need to retrieve the new holds that are marked "on shelf".
-        #if 'on shelf' in tr.item_loan_status:
         if 'on shelf' in tr.item_loan_status:
             records.append(tr)
     return records
 
 
 def tind_json(access_handler, notifier):
-    user, pswd = access_handler.name_and_password()
-    if not user or not pswd:
-        return None
-
     # Loop the login part in case the user enters the wrong password.
     logged_in = False
     while not logged_in:
@@ -145,17 +141,17 @@ def tind_json(access_handler, notifier):
             raise ServiceFailure(details)
 
         # Now do the login step.
+        user, pswd = access_handler.name_and_password()
+        if not user or not pswd:
+            return None
         tree = html.fromstring(res.content)
         sessionid = session.cookies.get('JSESSIONID')
-        login_data = sso_login_data(user, pswd)
         next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
+        login_data = sso_login_data(user, pswd)
         res = session.post(next_url, data = login_data, allow_redirects = True)
         logged_in = bool(str(res.content).find('Forgot your password') <= 0)
-        if not logged_in:
-            if notifier.yes_no('Incorrect login. Try again?'):
-                user, pswd = access_handler.name_and_password()
-            else:
-                raise UserCancelled
+        if not logged_in and not notifier.yes_no('Incorrect login. Try again?'):
+            raise UserCancelled
 
     # Extract the SAML data and follow through with the action url.
     # This is needed to get the necessary cookies into the session object.
