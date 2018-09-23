@@ -87,7 +87,7 @@ from holdit.exceptions import *
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
     no_sheet   = ('do not open the spreadsheet (default: open it)',  'flag',   'S'),
-    reset      = ('reset keyring stored user name and password',     'flag',   'R'),
+    reset      = ('reset keyring-stored user name and password',     'flag',   'R'),
     test       = ('run test only, returning a fixed result',         'flag',   'T'),
     version    = ('print version info and exit',                     'flag',   'V'),
 )
@@ -198,7 +198,7 @@ information and exit without doing anything else.
         # Sanity check against possible screwups in creating the Holdit! app.
         # Do them here so that we can fail early if we know we can't finish.
         if not readable(template_file):
-            notifier.fatal('Template doc file "{}" not readable.'.format(template))
+            notifier.fatal('Template doc file "{}" not readable.'.format(template_file))
         if not writable(desktop_path()):
             notifier.fatal('Output folder "{}" not writable.'.format(desktop_path()))
 
