@@ -173,11 +173,11 @@ information and exit without doing anything else.
 
     # Final sanity checks before doing the real work.
     if use_gui and no_keyring:
-        msg('Warning: keyring flag ignored when using GUI', 'warn', use_color)
+        notifier.warn('keyring flag ignored when using GUI')
     if use_gui and reset:
-        msg('Warning: reset flag ignored when using GUI', 'warn', use_color)
+        notifier.warn('reset flag ignored when using GUI')
     if not network_available():
-        notifier.msg('No network connection.', severity = 'fatal')
+        notifier.fatal('No network connection.')
         sys.exit()
 
     # Let's do this thing.
@@ -193,18 +193,14 @@ information and exit without doing anything else.
             if readable(temp):
                 template_file = temp
             else:
-                # Use plain msg() b/c cmd line flags only available in CLI mode.
-                msg('File "{}" not readable -- using default.'.format(template),
-                    'warn', colorize)
+                notifier.warn('File "{}" not readable -- using default.'.format(template))
 
         # Sanity check against possible screwups in creating the Holdit! app.
         # Do them here so that we can fail early if we know we can't finish.
         if not readable(template_file):
-            notifier.msg('Template doc file "{}" not readable.'.format(template),
-                         severity = 'fatal')
+            notifier.fatal('Template doc file "{}" not readable.'.format(template))
         if not writable(desktop_path()):
-            notifier.msg('Output folder "{}" not writable.'.format(desktop_path()),
-                         severity = 'fatal')
+            notifier.fatal('Output folder "{}" not writable.'.format(desktop_path()))
 
         # Get the data.
         spreadsheet_id = config.get('holdit', 'spreadsheet_id')
@@ -235,13 +231,13 @@ information and exit without doing anything else.
             open_google(spreadsheet_id)
     except (KeyboardInterrupt, UserCancelled):
         if no_gui:
-            msg('Quitting.', 'warn', use_color)
+            notifier.warn('Quitting.')
         sys.exit()
     except Exception as err:
-        notifier.msg(holdit.__title__ + ' encountered an error',
-                     str(err) + '\n' + traceback.format_exc(), 'fatal')
+        notifier.error(holdit.__title__ + ' encountered an error',
+                       str(err) + '\n' + traceback.format_exc())
     if no_gui:
-        msg('Done.', 'info', use_color)
+        notifier.info('Done.')
 
 
 # On windows, we want the command-line args to use slash intead of hyphen.
