@@ -60,7 +60,7 @@ class MessageHandlerCLI():
 
 
     def fatal(self, text, details = ''):
-        msg('FATAL: ' + text, 'fatal', self.colorize)
+        msg('FATAL: ' + text, ['error', 'bold'], self.colorize)
 
 
     def yes_no(self, question):
