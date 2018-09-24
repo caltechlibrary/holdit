@@ -27,6 +27,7 @@ from holdit.files import open_url, datadir_path
 import logging
 logging.getLogger('googleapiclient').setLevel(logging.CRITICAL)
 
+
 
 # Global constants.
 # .............................................................................
@@ -153,7 +154,7 @@ def spreadsheet_credentials(user, message_handler):
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         creds = tools.run_flow(flow, store)
     if not creds:
-        message_handler.msg('Failed to get Google API token', severity = 'error')
+        message_handler.error('Failed to get Google API token')
         raise InternalError('Failed to get Google API token')
     return creds
 
@@ -178,8 +179,7 @@ def update_google(gs_id, records, user, message_handler):
     creds = spreadsheet_credentials(user, message_handler)
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     if not service:
-        message_handler.msg('Unable to connect to Google spreadsheet service',
-                            severity = 'error')
+        message_handler.error('Unable to connect to Google spreadsheet service')
         raise InternalError()
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
