@@ -26,7 +26,7 @@ from holdit.files import open_url, datadir_path
 
 import logging
 logging.getLogger('googleapiclient').setLevel(logging.CRITICAL)
-
+logging.getLogger('oauth2client').setLevel(logging.CRITICAL)
 
 
 # Global constants.
