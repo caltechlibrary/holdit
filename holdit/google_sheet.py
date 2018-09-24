@@ -24,6 +24,9 @@ from holdit.exceptions import *
 from holdit.records import HoldRecord
 from holdit.files import open_url, datadir_path
 
+import logging
+logging.getLogger('googleapiclient').setLevel(logging.CRITICAL)
+
 
 # Global constants.
 # .............................................................................
