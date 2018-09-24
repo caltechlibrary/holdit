@@ -53,7 +53,7 @@ def datadir_path():
     return path.join(module_path(), 'data')
 
 
-def rename_existing(file, notifier):
+def rename_existing(file):
     '''Renames 'file' to 'file.bak'.  Uses a notifier class to provide info
     about what it does.'''
 
@@ -64,10 +64,6 @@ def rename_existing(file, notifier):
             os.rename(f, backup)
         except:
             return
-        notifier.msg('Renamed existing file "{}" to "{}"'.format(f, backup),
-                     'To avoid overwriting the existing file "{}", '.format(f)
-                     + 'it has been renamed to "{}"'.format(backup),
-                     'info')
 
     if path.exists(file):
         rename(file)
