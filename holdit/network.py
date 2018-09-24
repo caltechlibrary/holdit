@@ -7,7 +7,7 @@ import requests
 def network_available():
     '''Return True if it appears we have a network connection, False if not.'''
     try:
-        r = requests.get("https://www.caltech.edu")
+        r = requests.get("https://www.google.com")
         return True
     except requests.ConnectionError:
         return False
