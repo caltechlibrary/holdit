@@ -1,5 +1,5 @@
 '''
-messages: message-printing utilities for Turf.
+messages: message-printing utilities for Holdit!
 
 Authors
 -------
@@ -14,6 +14,7 @@ open-source software released under a 3-clause BSD license.  Please see the
 file "LICENSE" for more information.
 '''
 
+import queue
 import sys
 import wx
 import wx.lib.dialogs
@@ -30,66 +31,118 @@ import holdit
 from holdit.exceptions import *
 
 
-# Class definitions.
-# ......................................................................
+# Exported classes.
+# .............................................................................
+# The basic principle of writing the classes (like this one) that get used in
+# MainBody is that they should take the information they need, rather than
+# putting the info into the controller object (i.e., HolditControlGUI or
+# HolditControlCLI).  This means, for example, that 'use_color' is handed to
+# the CLI version of this object, not to the base class or the HolditControl*
+# classes, even though use_color is something that may be relevant to more
+# than one of the main classes.  This is a matter of separation of concerns
+# and information hiding.
 
-class MessageHandlerCLI():
-    def __init__(self, use_color = True):
-        self.colorize = use_color
-        self.on_windows = sys.platform.startswith('win')
+class MessageHandlerBase():
+    '''Base class for message-printing classes in Holdit!'''
+
+    def __init__(self, controller):
+        self._controller = controller
 
 
-    def note(self, text):
-        msg(text, 'info', self.colorize)
+class MessageHandlerCLI(MessageHandlerBase):
+    '''Class for printing console messages and asking the user questions.'''
 
-
-    def msg(self, text, details = '', severity = 'info'):
-        msg(text, severity, self.colorize)
+    def __init__(self, controller, use_color):
+        super().__init__(controller)
+        self._colorize = use_color
 
 
     def info(self, text, details = ''):
-        msg(text, 'info', self.colorize)
+        '''Prints an informational message.'''
+        msg(text, 'info', self._colorize)
 
 
     def warn(self, text, details = ''):
-        msg('Warning: ' + text, 'warn', self.colorize)
+        '''Prints a nonfatal, noncritical warning message.'''
+        msg('Warning: ' + text, 'warn', self._colorize)
 
 
     def error(self, text, details = ''):
-        msg('Error: ' + text, 'error', self.colorize)
+        '''Prints a message reporting a critical error.'''
+        msg('Error: ' + text, 'error', self._colorize)
 
 
     def fatal(self, text, details = ''):
-        msg('FATAL: ' + text, ['error', 'bold'], self.colorize)
+        '''Prints a message reporting a fatal error.  This method does not
+        exit the program; it leaves that to the caller in case the caller
+        needs to perform additional tasks before exiting.
+        '''
+        msg('FATAL: ' + text, ['error', 'bold'], self._colorize)
 
 
     def yes_no(self, question):
+        '''Asks a yes/no question of the user, on the command line.'''
         return input("{} (y/n) ".format(question)).startswith(('y', 'Y'))
 
 
-class MessageHandlerGUI():
-    def __init__(self):
-        pass
+class MessageHandlerGUI(MessageHandlerBase):
+    '''Class for GUI-based user messages and asking the user questions.'''
+
+    def __init__(self, controller):
+        super().__init__(controller)
+        self._parent_frame = controller.frame
+        self._queue = queue.Queue()
+        self._response = None
 
 
-    def note(self, text):
+    def info(self, text, details = ''):
+        '''Prints an informational message.'''
+        wx.CallAfter(self._note, text)
+        self._wait()
+
+
+    def warn(self, text, details = ''):
+        '''Prints a nonfatal, noncritical warning message.'''
+        wx.CallAfter(self._dialog, text, details, 'warn')
+        self._wait()
+
+
+    def error(self, text, details = ''):
+        '''Prints a message reporting a critical error.'''
+        wx.CallAfter(self._dialog, text, details, 'error')
+        self._wait()
+
+
+    def fatal(self, text, details = ''):
+        '''Prints a message reporting a fatal error.  This method does not
+        exit the program; it leaves that to the caller in case the caller
+        needs to perform additional tasks before exiting.
+        '''
+        wx.CallAfter(self._dialog, text, details, 'fatal')
+        self._wait()
+
+
+    def yes_no(self, question):
+        '''Asks the user a yes/no question using a GUI dialog.'''
+        wx.CallAfter(self._yes_no, question)
+        self._wait()
+        return self._response
+
+
+    def _note(self, text):
         '''Displays a simple notice with a single OK button.'''
-        app = wx.App()
-        frame = wx.Frame(None)
+        frame = wx.Frame(self._parent_frame)
         frame.Center()
         dlg = wx.GenericMessageDialog(frame, text, caption = "Holdit!",
                                       style = wx.OK | wx.ICON_INFORMATION)
         clicked = dlg.ShowModal()
         dlg.Destroy()
         frame.Destroy()
+        self._queue.put(True)
 
 
-    def msg(self, text, details = '', severity = 'error'):
-        # When running with a GUI, we only bring up error dialogs.
-        if 'info' in severity:
-            return
-        app = wx.App()
-        frame = wx.Frame(None)
+    def _dialog(self, text, details = '', severity = 'error'):
+        frame = wx.Frame(self._parent_frame)
         frame.Center()
         if 'fatal' in severity:
             short = text
@@ -98,10 +151,10 @@ class MessageHandlerGUI():
             short = text + '\n\nWould you like to try to continue?\n(Click "no" to quit now.)'
             style = wx.YES_NO | wx.YES_DEFAULT | wx.HELP | wx.ICON_EXCLAMATION
         dlg = wx.MessageDialog(frame, message = short, style = style,
-                               caption = "Holdit encountered a problem")
+                               caption = "Holdit has encountered a problem")
         clicked = dlg.ShowModal()
         if clicked == wx.ID_HELP:
-            body = ("Holdit has encountered an error:\n"
+            body = ("Holdit has encountered a problem:\n"
                     + "─"*30
                     + "\n{}\n".format(details or text)
                     + "─"*30
@@ -115,44 +168,35 @@ class MessageHandlerGUI():
             info.ShowModal()
             info.Destroy()
             frame.Destroy()
+            self._queue.put(True)
         elif clicked in [wx.ID_NO, wx.ID_OK]:
             dlg.Destroy()
             frame.Destroy()
-            raise UserCancelled
+            self._queue.put(True)
         else:
             dlg.Destroy()
+            self._queue.put(True)
 
 
-    def info(self, text, details = ''):
-        self.msg(text, details, 'info')
-
-
-    def warn(self, text, details = ''):
-        self.msg(text, details, 'warn')
-
-
-    def error(self, text, details = ''):
-        self.msg(text, details, 'error')
-
-
-    def fatal(self, text, details = ''):
-        self.msg(text, details, 'fatal')
-
-
-    def yes_no(self, question):
-        app = wx.App()
-        frame = wx.Frame(None)
+    def _yes_no(self, question):
+        frame = wx.Frame(self._parent_frame)
         frame.Center()
         dlg = wx.GenericMessageDialog(frame, question, caption = "Holdit!",
                                       style = wx.YES_NO | wx.ICON_QUESTION)
         clicked = dlg.ShowModal()
         dlg.Destroy()
         frame.Destroy()
-        return clicked == wx.ID_YES
+        self._response = (clicked == wx.ID_YES)
+        self._queue.put(True)
+
+
+    def _wait(self):
+        self._queue.get()
+
 
 
-# Direct-access message utilities.
-# ......................................................................
+# Message utility funcions.
+# .............................................................................
 
 def msg(text, flags = None, colorize = True):
     '''Like the standard print(), but flushes the output immediately and
@@ -196,7 +240,7 @@ def color(text, flags = None, colorize = True):
 
 
 # Internal utilities.
-# ......................................................................
+# .............................................................................
 
 def _print_header(text, flags, quiet = False, colorize = True):
     if not quiet:

@@ -1,9 +1,22 @@
 '''
 access.py: code to deal with getting user access credentials
+
+Authors
+-------
+
+Michael Hucka <mhucka@caltech.edu> -- Caltech Library
+
+Copyright
+---------
+
+Copyright (c) 2018 by the California Institute of Technology.  This code is
+open-source software released under a 3-clause BSD license.  Please see the
+file "LICENSE" for more information.
 '''
 
 import os
 import os.path as path
+import queue
 import wx
 import wx.adv
 import textwrap
@@ -36,14 +49,22 @@ The name of the keyring used to store Caltech access credentials, if any.
 '''
 
 
-# Exported interfaces to different approaches to getting credentials.
+# Exported classes.
 # .............................................................................
+# The basic principle of writing the classes (like this one) that get used in
+# MainBody is that they should take the information they need, rather than
+# putting the info into the controller object (i.e., HolditControlGUI or
+# HolditControlCLI).  This is a matter of separation of concerns and
+# information hiding.
 
 class AccessHandlerBase():
-    def __init__(self, the_user = None, the_pswd = None):
-        '''Initialize internal data with user and password if available.'''
-        self._user = the_user
-        self._pswd = the_pswd
+    ''''Base class for dealing with user access credentials.'''
+
+    def __init__(self, controller, user, pswd):
+        '''Initialize internal data with user and password (if given).'''
+        self._controller = controller
+        self._user = user
+        self._pswd = pswd
 
     @property
     def user(self):
@@ -54,38 +75,14 @@ class AccessHandlerBase():
         return self._pswd
 
 
-class AccessHandlerGUI(AccessHandlerBase):
-    '''Use a GUI to ask the user for credentials.'''
-
-    def name_and_password(self):
-        '''Returns a tuple of user, password.'''
-        tmp_user = self._user
-        tmp_pswd = self._pswd
-
-        if __debug__: log('Invoking GUI')
-        tmp_user, tmp_pswd, cancel = self._credentials_from_gui(tmp_user, tmp_pswd)
-        if cancel:
-            if __debug__: log('User initiated quit from within GUI')
-            raise UserCancelled
-
-        self._user = tmp_user
-        self._pswd = tmp_pswd
-        return self._user, self._pswd
-
-
-    def _credentials_from_gui(self, user, pswd):
-        gui = HolditGUI(0)
-        gui.initialize_values(user, pswd)
-        gui.MainLoop()
-        return gui.final_values()
-
-
 class AccessHandlerCLI(AccessHandlerBase):
-    def __init__(self, the_user = None, the_pswd = None, use_keyring = True, reset = False):
-        '''Initialize internal data with user and password if available.'''
-        super().__init__(the_user, the_pswd)
+    '''Class to use the command line to ask the user for credentials.'''
+
+    def __init__(self, controller, user, pswd, use_keyring, reset_keyring):
+        '''Initializes internal data with user and password if available.'''
+        super().__init__(controller, user, pswd)
         self._use_keyring = use_keyring
-        self._reset = reset
+        self._reset = reset_keyring
 
 
     def name_and_password(self):
@@ -114,62 +111,63 @@ class AccessHandlerCLI(AccessHandlerBase):
         self._pswd = tmp_pswd
         return self._user, self._pswd
 
+
+class AccessHandlerGUI(AccessHandlerBase):
+    '''Class to use a GUI to ask the user for credentials.'''
+
+    def __init__(self, controller, user, pswd):
+        '''Initializes internal data with user and password if available.'''
+        super().__init__(controller, user, pswd)
+        self._parent_frame = controller.frame
+        self._queue = queue.Queue()
+        self._cancelled = False
+
+
+    def name_and_password(self):
+        '''Returns a tuple of user, password.'''
+        self._dialog = LoginDialog(self._parent_frame)
+        self._dialog.initialize_values(self._user, self._pswd)
+        wx.CallAfter(self._credentials_from_gui, self._queue)
+        self._wait()
+        self._user, self._pswd, self._cancelled = self._dialog.final_values()
+        if self._cancelled:
+            raise UserCancelled
+        return self._user, self._pswd
+
+
+    def _credentials_from_gui(self, queue):
+        self._dialog.set_queue(queue)
+        self._dialog.ShowWindowModal()
+
+
+    def _wait(self):
+        self._queue.get()
+
 
-# Internal implementation classes for login GUI.
+# Internal implementation classes for login dialog GUI.
 # .............................................................................
 
-class UserInputValues():
-    '''Utility class to store and communicate values from GUI interactions.'''
-    user = None
-    password = None
-    cancel = False
+class LoginDialog(wx.Dialog):
+    def __init__(self, parent_frame):
+        super(LoginDialog, self).__init__(parent_frame)
+        self._user = None
+        self._password = None
+        self._cancel = False
 
-
-class HolditGUI(wx.App):
-    '''Top level class for creating and interacting with the login GUI.'''
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.values = UserInputValues()
-
-
-    def OnInit(self):
-        self.setsizeframe = MainFrame(None, wx.ID_ANY, "")
-        self.SetTopWindow(self.setsizeframe)
-        self.setsizeframe.Show()
-        return True
-
-
-    def initialize_values(self, user, password):
-        self.values.user = user
-        self.values.password = password
-        self.setsizeframe.initialize_values(self.values)
-
-
-    def final_values(self):
-        return self.values.user, self.values.password, self.values.cancel
-
-
-class MainFrame(wx.Frame):
-    def __init__(self, *args, **kwds):
-        self.values = None
-
-        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
-        wx.Frame.__init__(self, *args, **kwds)
         panel = wx.Panel(self)
         if sys.platform.startswith('win'):
-            self.SetSize((425, 200))
+            self.SetSize((330, 175))
         else:
-            self.SetSize((355, 175))
-        self.title = wx.StaticText(panel, wx.ID_ANY,
-                                   holdit.__name__ + " — generate a list of hold requests",
-                                   style = wx.ALIGN_CENTER)
+            self.SetSize((330, 155))
+        self.explanation = wx.StaticText(panel, wx.ID_ANY,
+                                         'Holdit! needs your Caltech Access credentials',
+                                         style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
-        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND login: ", style = wx.ALIGN_RIGHT)
+        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech login: ", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
         self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.login.Bind(wx.EVT_TEXT, self.on_text)
-        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech TIND password: ", style = wx.ALIGN_RIGHT)
+        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech password: ", style = wx.ALIGN_RIGHT)
         self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PASSWORD)
         self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
         self.password.Bind(wx.EVT_TEXT, self.on_text)
@@ -181,40 +179,11 @@ class MainFrame(wx.Frame):
         self.ok_button.SetDefault()
         self.ok_button.Disable()
 
-        # Create a simple menu bar.
-        self.menuBar = wx.MenuBar(0)
-
-        # Add a "File" menu with a quit item.
-        self.fileMenu = wx.Menu()
-        self.exitItem = wx.MenuItem(self.fileMenu, wx.ID_EXIT, "&Exit",
-                                    wx.EmptyString, wx.ITEM_NORMAL)
-        self.fileMenu.Append(self.exitItem)
-        if sys.platform.startswith('win'):
-            # Only need to add a File menu on Windows.  On Macs, wxPython
-            # automatically puts the wx.ID_EXIT item under the app menu.
-            self.menuBar.Append(self.fileMenu, "&File")
-
-        # Add a "help" menu bar item.
-        self.helpMenu = wx.Menu()
-        self.helpItem = wx.MenuItem(self.helpMenu, wx.ID_HELP, "&Help",
-                                    wx.EmptyString, wx.ITEM_NORMAL)
-        self.helpMenu.Append(self.helpItem)
-        self.helpMenu.AppendSeparator()
-        self.aboutItem = wx.MenuItem(self.helpMenu, wx.ID_ABOUT,
-                                     "&About " + holdit.__name__,
-                                     wx.EmptyString, wx.ITEM_NORMAL)
-        self.helpMenu.Append(self.aboutItem)
-        self.menuBar.Append(self.helpMenu, "Help")
-
         # Put everything together and bind some keystrokes to events.
-        self.SetMenuBar(self.menuBar)
         self.__set_properties()
         self.__do_layout()
         self.Bind(wx.EVT_BUTTON, self.on_cancel_or_quit, self.cancel_button)
         self.Bind(wx.EVT_BUTTON, self.on_ok, self.ok_button)
-        self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = self.exitItem.GetId())
-        self.Bind(wx.EVT_MENU, self.on_help, id = self.helpItem.GetId())
-        self.Bind(wx.EVT_MENU, self.on_about, id = self.aboutItem.GetId())
         self.Bind(wx.EVT_CLOSE, self.on_cancel_or_quit)
 
         close_id = wx.NewId()
@@ -225,8 +194,6 @@ class MainFrame(wx.Frame):
 
     def __set_properties(self):
         self.SetTitle(holdit.__name__)
-        self.title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD, 0, "Arial"))
-        self.top_line.SetMinSize((360, 2))
         self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
         self.login.SetMinSize((195, 22))
         self.password_label.SetToolTip("The account password to use to log in to caltech.tind.io. This should be a Caltech access password.")
@@ -239,9 +206,9 @@ class MainFrame(wx.Frame):
         self.button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.login_sizer = wx.FlexGridSizer(2, 2, 5, 0)
         self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add(self.title, 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add((360, 8), 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add(self.top_line, 0, wx.EXPAND, 0)
+        self.outermost_sizer.Add(self.explanation, 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add(self.top_line, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
         self.outermost_sizer.Add((360, 8), 0, wx.ALIGN_CENTER, 0)
         self.login_sizer.Add(self.login_label, 0, wx.ALIGN_RIGHT, 0)
         self.login_sizer.Add(self.login, 0, wx.EXPAND, 0)
@@ -249,7 +216,7 @@ class MainFrame(wx.Frame):
         self.login_sizer.Add(self.password, 0, wx.EXPAND, 0)
         self.outermost_sizer.Add(self.login_sizer, 1, wx.ALIGN_CENTER | wx.FIXED_MINSIZE, 5)
         self.outermost_sizer.Add((360, 5), 0, 0, 0)
-        self.outermost_sizer.Add(self.bottom_line, 0, wx.EXPAND, 0)
+        self.outermost_sizer.Add(self.bottom_line, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
         self.outermost_sizer.Add((360, 5), 0, 0, 0)
         self.button_sizer.Add((0, 0), 0, 0, 0)
         self.button_sizer.Add(self.cancel_button, 0, wx.ALIGN_CENTER, 0)
@@ -263,14 +230,19 @@ class MainFrame(wx.Frame):
         self.Centre()
 
 
-    def initialize_values(self, values):
-        self.values = values
-        if values.user:
-            self.login.AppendText(values.user)
+    def initialize_values(self, user, password):
+        self._user = user
+        self._password = password
+        if self._user:
+            self.login.AppendText(self._user)
             self.login.Refresh()
-        if values.password:
-            self.password.AppendText(values.password)
+        if self._password:
+            self.password.AppendText(self._password)
             self.password.Refresh()
+
+
+    def final_values(self):
+        return self._user, self._password, self._cancel
 
 
     def inputs_nonempty(self):
@@ -285,17 +257,19 @@ class MainFrame(wx.Frame):
         '''Stores the current values and destroys the dialog.'''
 
         if self.inputs_nonempty():
-            self.values.cancel = False
-            self.values.user = self.login.GetValue()
-            self.values.password = self.password.GetValue()
+            self._cancel = False
+            self._user = self.login.GetValue()
+            self._password = self.password.GetValue()
             self.Destroy()
+            self.queue.put(True)
         else:
             self.complain_incomplete_values()
 
 
     def on_cancel_or_quit(self, event):
-        self.values.cancel = True
+        self._cancel = True
         self.Destroy()
+        self.queue.put(True)
 
 
     def on_text(self, event):
@@ -347,24 +321,9 @@ class MainFrame(wx.Frame):
                                   pos = wx.DefaultPosition)
         response = dialog.ShowModal()
         if (response == wx.ID_YES):
-            self.values.cancel = True
+            self._cancel = True
             self.Destroy()
 
 
-    def on_about(self, event):
-        dlg = wx.adv.AboutDialogInfo()
-        dlg.SetName(holdit.__name__)
-        dlg.SetVersion(holdit.__version__)
-        dlg.SetLicense(holdit.__license__)
-        dlg.SetDescription('\n'.join(textwrap.wrap(holdit.__description__, 81)))
-        dlg.SetWebSite(holdit.__url__)
-        dlg.AddDeveloper(u"Michael Hucka (California Institute of Technology)")
-        wx.adv.AboutBox(dlg)
-
-
-    def on_help(self, event):
-        wx.BeginBusyCursor()
-        help_file = path.join(datadir_path(), "help.html")
-        if readable(help_file):
-            webbrowser.open_new("file://" + help_file)
-        wx.EndBusyCursor()
+    def set_queue(self, queue):
+        self.queue = queue

@@ -59,16 +59,20 @@ import os
 import os.path as path
 import plac
 import sys
+import time
+from   threading import Thread
 import traceback
 
 import holdit
+from holdit.control import HolditControlGUI, HolditControlCLI
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
+from holdit.progress import ProgressIndicatorGUI, ProgressIndicatorCLI
+from holdit.messages import MessageHandlerGUI, MessageHandlerCLI
 from holdit.config import Config
 from holdit.records import records_diff, records_filter
 from holdit.tind import records_from_tind
 from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import printable_doc
-from holdit.messages import color, msg, MessageHandlerGUI, MessageHandlerCLI
 from holdit.network import network_available
 from holdit.files import readable, writable, open_file
 from holdit.files import rename_existing, desktop_path, module_path
@@ -88,13 +92,12 @@ from holdit.exceptions import *
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
     no_sheet   = ('do not open the spreadsheet (default: open it)',  'flag',   'S'),
     reset      = ('reset keyring-stored user name and password',     'flag',   'R'),
-    test       = ('run test only, returning a fixed result',         'flag',   'T'),
     version    = ('print version info and exit',                     'flag',   'V'),
 )
 
 def main(user = 'U', pswd = 'P', output='O', template='F',
          no_color=False, no_gui=False, no_keyring=False, no_sheet=False,
-         reset=False, test=False, version=False):
+         reset=False, version=False):
     '''Generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
@@ -165,81 +168,124 @@ information and exit without doing anything else.
 
     # Switch between different ways of getting information from/to the user.
     if use_gui:
-        accesser = AccessHandlerGUI(user, pswd)
-        notifier = MessageHandlerGUI()
+        controller = HolditControlGUI()
+        accesser   = AccessHandlerGUI(controller, user, pswd)
+        notifier   = MessageHandlerGUI(controller)
+        tracer     = ProgressIndicatorGUI(controller)
     else:
-        accesser = AccessHandlerCLI(user, pswd, use_keyring, reset)
-        notifier = MessageHandlerCLI(use_color)
+        controller = HolditControlCLI()
+        accesser   = AccessHandlerCLI(controller, user, pswd, use_keyring, reset)
+        notifier   = MessageHandlerCLI(controller, use_color)
+        tracer     = ProgressIndicatorCLI(controller, use_color)
 
-    # Final sanity checks before doing the real work.
-    if use_gui and no_keyring:
-        notifier.warn('keyring flag ignored when using GUI')
-    if use_gui and reset:
-        notifier.warn('reset flag ignored when using GUI')
-    if not network_available():
-        notifier.fatal('No network connection.')
-        sys.exit()
+    # Start the worker thread.
+    controller.start(MainBody(template, output, view_sheet,
+                              controller, tracer, accesser, notifier))
 
-    # Let's do this thing.
-    try:
-        config = Config(path.join(module_path(), "holdit.ini"))
 
-        # The default template is expected to be inside the Holdit module.
-        # If the user supplies a template, we use it instead.
-        template_file = config.get('holdit', 'template')
-        template_file = path.abspath(path.join(module_path(), template_file))
-        if template:
-            temp = path.abspath(template)
-            if readable(temp):
-                template_file = temp
+class MainBody(Thread):
+    '''Main body of Holdit! implemented as a Python thread.'''
+
+    def __init__(self, template, output, view_sheet,
+                 controller, tracer, accesser, notifier):
+        Thread.__init__(self, name = "MainBody")
+        self._template   = template
+        self._output     = output
+        self._view_sheet = view_sheet
+        self._controller = controller
+        self._tracer     = tracer
+        self._accesser   = accesser
+        self._notifier   = notifier
+        if controller.is_gui:
+            # Only make this a daemon thread when using the GUI; for CLI, it
+            # must not be a daemon thread or else Holdit! exits immediately.
+            self.daemon = True
+
+
+    def run(self):
+        # Set shortcut variables for better code readability.
+        template   = self._template
+        output     = self._output
+        view_sheet = self._view_sheet
+        controller = self._controller
+        accesser   = self._accesser
+        notifier   = self._notifier
+        tracer     = self._tracer
+
+        # Preliminary sanity checks.  Do this here because we need the notifier
+        # object to be initialized based on whether we're using GUI or CLI.
+        tracer.start('Performing initial checks')
+        if not network_available():
+            notifier.fatal('No network connection.')
+
+        # Let's do this thing.
+        try:
+            config = Config(path.join(module_path(), "holdit.ini"))
+
+            # The default template is expected to be inside the Holdit module.
+            # If the user supplies a template, we use it instead.
+            tracer.update('Getting output template')
+            template_file = config.get('holdit', 'template')
+            template_file = path.abspath(path.join(module_path(), template_file))
+            if template:
+                temp = path.abspath(template)
+                if readable(temp):
+                    template_file = temp
+                else:
+                    notifier.warn('File "{}" not readable -- using default.'.format(template))
+
+            # Sanity check against possible screwups in creating the Holdit! app.
+            # Do them here so that we can fail early if we know we can't finish.
+            if not readable(template_file):
+                notifier.fatal('Template doc file "{}" not readable.'.format(template_file))
+                sys.exit()
+            if not writable(desktop_path()):
+                notifier.fatal('Output folder "{}" not writable.'.format(desktop_path()))
+                sys.exit()
+
+            # Get the data.
+            spreadsheet_id = config.get('holdit', 'spreadsheet_id')
+            tracer.update('Connecting to TIND')
+            tind_records = records_from_tind(accesser, notifier, tracer)
+            tracer.update('Connecting to Google')
+            google_records = records_from_google(spreadsheet_id, accesser.user, notifier)
+            missing_records = records_diff(google_records, tind_records)
+            new_records = list(filter(records_filter('all'), missing_records))
+
+            if len(new_records) > 0:
+                # Update the spreadsheet with new records.
+                tracer.update('Updating Google spreadsheet')
+                update_google(spreadsheet_id, new_records, accesser.user, notifier)
+                # Write a printable report.
+                tracer.update('Generating printable document')
+                if not output:
+                    output = path.join(desktop_path(), "holds_print_list.docx")
+                if path.exists(output):
+                    rename_existing(output)
+                result = printable_doc(new_records, template_file)
+                result.save(output)
+                tracer.update('Opening Word document for printing')
+                open_file(output)
             else:
-                notifier.warn('File "{}" not readable -- using default.'.format(template))
-
-        # Sanity check against possible screwups in creating the Holdit! app.
-        # Do them here so that we can fail early if we know we can't finish.
-        if not readable(template_file):
-            notifier.fatal('Template doc file "{}" not readable.'.format(template_file))
-            sys.exit()
-        if not writable(desktop_path()):
-            notifier.fatal('Output folder "{}" not writable.'.format(desktop_path()))
-            sys.exit()
-
-        # Get the data.
-        spreadsheet_id = config.get('holdit', 'spreadsheet_id')
-        tind_records = records_from_tind(accesser, notifier)
-        google_records = records_from_google(spreadsheet_id, accesser.user, notifier)
-        missing_records = records_diff(google_records, tind_records)
-        new_records = list(filter(records_filter('all'), missing_records))
-        if test:
-            new_records = [google_records[0], google_records[1]]
-
-        if len(new_records) > 0:
-            # Update the spreadsheet with new records.
-            update_google(spreadsheet_id, new_records, accesser.user, notifier)
-            # Write a printable report.
-            if not output:
-                output = path.join(desktop_path(), "holds_print_list.docx")
-            rename_existing(output, notifier)
-            result = printable_doc(new_records, template_file)
-            result.save(output)
-            open_file(output)
-        else:
-            notifier.note('No new hold requests were found in TIND.')
-        # Open the spreadsheet too, if requested.
-        if use_gui:
-            if notifier.yes_no('Open the tracking spreadsheet?'):
+                tracer.update('No new hold requests were found in TIND.')
+            # Open the spreadsheet too, if requested.
+            if isinstance(notifier, MessageHandlerGUI):
+                if notifier.yes_no('Open the tracking spreadsheet?'):
+                    open_google(spreadsheet_id)
+            elif view_sheet:
                 open_google(spreadsheet_id)
-        elif view_sheet:
-            open_google(spreadsheet_id)
-    except (KeyboardInterrupt, UserCancelled):
-        if no_gui:
-            notifier.warn('Quitting.')
-        sys.exit()
-    except Exception as err:
-        notifier.fatal(holdit.__title__ + ' encountered an error',
-                       str(err) + '\n' + traceback.format_exc())
-    if no_gui:
-        notifier.info('Done.')
+        except (KeyboardInterrupt, UserCancelled) as err:
+            tracer.stop('Quitting.')
+            controller.stop()
+        except Exception as err:
+            import pdb; pdb.set_trace()
+            tracer.stop('Stopping due to error')
+            notifier.fatal(holdit.__title__ + ' encountered an error',
+                           str(err) + '\n' + traceback.format_exc())
+            controller.stop()
+        else:
+            tracer.stop('Done')
+            controller.stop()
 
 
 # On windows, we want the command-line args to use slash intead of hyphen.
