@@ -1,5 +1,17 @@
 '''
 tind.py: code for interacting with Caltech.TIND.io
+
+Authors
+-------
+
+Michael Hucka <mhucka@caltech.edu> -- Caltech Library
+
+Copyright
+---------
+
+Copyright (c) 2018 by the California Institute of Technology.  This code is
+open-source software released under a 3-clause BSD license.  Please see the
+file "LICENSE" for more information.
 '''
 
 import json
@@ -105,8 +117,8 @@ class TindRecord(HoldRecord):
 # Login code.
 # .............................................................................
 
-def records_from_tind(access_handler, notifier):
-    json_data = tind_json(access_handler, notifier)
+def records_from_tind(access_handler, notifier, tracer):
+    json_data = tind_json(access_handler, notifier, tracer)
     if not json_data:
         return []
     records_data = json_data['recordsTotal']
@@ -124,7 +136,7 @@ def records_from_tind(access_handler, notifier):
     return records
 
 
-def tind_json(access_handler, notifier):
+def tind_json(access_handler, notifier, tracer):
     # Loop the login part in case the user enters the wrong password.
     logged_in = False
     while not logged_in:
@@ -136,8 +148,7 @@ def tind_json(access_handler, notifier):
         res = session.get(_SHIBBED_HOLD_URL, allow_redirects = True)
         if res.status_code >= 300:
             details = 'tind.io shib request returned status {}'.format(res.status_code)
-            notifier.msg('Unexpected network result -- please inform developers',
-                         details, 'fatal')
+            notifier.fatal('Unexpected network result -- please inform developers', details)
             raise ServiceFailure(details)
 
         # Now do the login step.
@@ -155,11 +166,11 @@ def tind_json(access_handler, notifier):
 
     # Extract the SAML data and follow through with the action url.
     # This is needed to get the necessary cookies into the session object.
+    tracer.update('Extracting data from TIND')
     tree = html.fromstring(res.content)
     if tree is None or tree.xpath('//form[@action]') is None:
         details = 'Caltech Shib access result does not have expected form'
-        notifier.msg('Unexpected network result -- please inform developers',
-                     details, 'fatal')
+        notifier.fatal('Unexpected network result -- please inform developers', details)
         raise ServiceFailure(details)
     next_url = tree.xpath('//form[@action]')[0].action
     SAMLResponse = tree.xpath('//input[@name="SAMLResponse"]')[0].value
@@ -168,8 +179,7 @@ def tind_json(access_handler, notifier):
     res = session.post(next_url, data = saml_payload, allow_redirects = True)
     if res.status_code != 200:
         details = 'tind.io action post returned status {}'.format(res.status_code)
-        notifier.msg('Caltech.tind.io circulation page failed to respond',
-                     details, 'fatal')
+        notifier.fatal('Caltech.tind.io circulation page failed to respond', details)
         raise ServiceFailure(details)
 
     # At this point, the session object has Invenio session cookies and
@@ -187,15 +197,13 @@ def tind_json(access_handler, notifier):
     res = session.get(ajax_url, headers = ajax_headers)
     if res.status_code != 200:
         details = 'tind.io ajax get returned status {}'.format(res.status_code)
-        notifier.msg('Caltech.tind.io failed to return hold data',
-                     details, 'fatal')
+        notifier.fatal('Caltech.tind.io failed to return hold data', details)
         raise ServiceFailure(details)
     decoded = res.content.decode('utf-8')
     json_data = json.loads(decoded)
     if 'recordsTotal' not in json_data:
         details = 'Could not find a "recordsTotal" field in returned data'
-        notifier.msg('Caltech.tind.io return results that we could not intepret',
-                     details, 'fatal')
+        notifier.fatal('Caltech.tind.io return results that we could not intepret', details)
         raise ServiceFailure(details)
     return json_data
 

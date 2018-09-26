@@ -1,5 +1,17 @@
 '''
 config.py: configuration file handling.
+
+Authors
+-------
+
+Michael Hucka <mhucka@caltech.edu> -- Caltech Library
+
+Copyright
+---------
+
+Copyright (c) 2018 by the California Institute of Technology.  This code is
+open-source software released under a 3-clause BSD license.  Please see the
+file "LICENSE" for more information.
 '''
 
 from   configparser import ConfigParser
