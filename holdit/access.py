@@ -188,7 +188,10 @@ class LoginDialog(wx.Dialog):
 
         close_id = wx.NewId()
         self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = close_id)
-        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('W'), close_id )])
+        accel_tbl = wx.AcceleratorTable([
+            (wx.ACCEL_CTRL, ord('W'), close_id ),
+            (wx.ACCEL_CMD, ord('.'), close_id ),
+        ])
         self.SetAcceleratorTable(accel_tbl)
 
 
