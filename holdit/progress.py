@@ -19,7 +19,6 @@ import sys
 import time
 import wx
 import wx.lib.dialogs
-from wx.lib.pubsub import pub
 
 try:
     from termcolor import colored
