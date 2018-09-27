@@ -14,6 +14,10 @@ open-source software released under a 3-clause BSD license.  Please see the
 file "LICENSE" for more information.
 '''
 
+import holdit
+from holdit.debug import log
+
+
 
 # Class definitions.
 # .............................................................................
@@ -50,6 +54,7 @@ class HoldRecord(object):
 def records_diff(known_records, new_records):
     '''Returns the records from 'new_records' missing from 'known_records'.
     The comparison is done on the basis of bar codes and request dates.'''
+    if __debug__: log('Diffing known records with new records')
     diffs = []
     for candidate in new_records:
         matched = [record for record in known_records
@@ -60,6 +65,7 @@ def records_diff(known_records, new_records):
             for record in matched:
                 if candidate.date_requested != record.date_requested:
                     diffs.append(candidate)
+    if __debug__: log('Found {} different records', len(diffs))
     return diffs
 
 

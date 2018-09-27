@@ -35,6 +35,7 @@ import holdit
 from holdit.exceptions import *
 from holdit.records import HoldRecord
 from holdit.files import open_url, datadir_path
+from holdit.debug import log
 
 import logging
 logging.getLogger('googleapiclient').setLevel(logging.CRITICAL)
@@ -95,11 +96,13 @@ class GoogleHoldRecord(HoldRecord):
 # found at https://developers.google.com/sheets/api/quickstart/python
 
 def records_from_google(gs_id, user, message_handler):
+    if __debug__: log('Getting entries from Google spreadsheet')
     spreadsheet_rows = spreadsheet_content(gs_id, user, message_handler)
     if spreadsheet_rows == []:
         return []
     # First row is the title row.
     results = []
+    if __debug__: log('Building records from {} rows', len(spreadsheet_rows) - 1)
     for index, row in enumerate(spreadsheet_rows[1:], start = 1):
         if not row or len(row) < 8:     # Empty or junk row.
             continue
@@ -159,9 +162,11 @@ def records_from_google(gs_id, user, message_handler):
 
 
 def spreadsheet_credentials(user, message_handler):
+    if __debug__: log('Getting token for Google API')
     store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
+        if __debug__: log('Using secrets file for Google API')
         secrets_file = path.join(datadir_path(), _SECRETS_FILE)
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         creds = tools.run_flow(flow, store)
@@ -173,10 +178,18 @@ def spreadsheet_credentials(user, message_handler):
 
 def spreadsheet_content(gs_id, user, message_handler):
     creds = spreadsheet_credentials(user, message_handler)
+    if __debug__: log('Building Google sheets service object')
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
     sheets_service = service.spreadsheets().values()
-    # If you don't supply a sheet name in the range arg, you get 1st sheet.
-    data = sheets_service.get(spreadsheetId = gs_id, range = 'A:Z').execute()
+    try:
+        # If you don't supply a sheet name in the range arg, you get 1st sheet.
+        data = sheets_service.get(spreadsheetId = gs_id, range = 'A:Z').execute()
+    except Exception as err:
+        text = 'attempted connection to Google resulted in {}'.format(err)
+        if __debug__: log(text)
+        message_handler.error('Unable to read Google spreadsheet', text)
+        raise InternalError('Failed to get Google API token')
+    if __debug__: log('Google call successful')
     return data.get('values', [])
 
 
@@ -189,18 +202,25 @@ def update_google(gs_id, records, user, message_handler):
     if not data:
         return
     creds = spreadsheet_credentials(user, message_handler)
+    if __debug__: log('Building Google sheets service object')
     service = build('sheets', 'v4', http = creds.authorize(Http()), cache_discovery = False)
-    if not service:
-        message_handler.error('Unable to connect to Google spreadsheet service')
-        raise InternalError()
     sheets_service = service.spreadsheets().values()
     body = {'values': data}
-    result = sheets_service.append(spreadsheetId = gs_id,
-                                   range = 'A:Z', body = body,
-                                   valueInputOption = 'USER_ENTERED').execute()
+    try:
+        if __debug__: log('Calling Google API for updating data')
+        result = sheets_service.append(spreadsheetId = gs_id,
+                                       range = 'A:Z', body = body,
+                                       valueInputOption = 'USER_ENTERED').execute()
+    except Exception as err:
+        text = 'attempted connection to Google resulted in {}'.format(err)
+        if __debug__: log(text)
+        message_handler.error('Unable to update Google spreadsheet', text)
+        raise InternalError(text)
+    if __debug__: log('Google call successful')
 
 
 def open_google(gs_id):
+    if __debug__: log('Opening Google spreadsheet')
     open_url(_GS_BASE_URL + gs_id)
 
 

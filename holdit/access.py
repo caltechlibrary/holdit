@@ -28,16 +28,7 @@ from holdit.credentials import password, credentials
 from holdit.credentials import keyring_credentials, save_keyring_credentials
 from holdit.exceptions import *
 from holdit.files import datadir_path, readable
-
-# Note: to turn on debugging, make sure python -O was *not* used to start
-# python, then set the logging level to DEBUG *before* loading this module.
-# Conversely, to optimize out all the debugging code, use python -O or -OO
-# and everything inside "if __debug__" blocks will be entirely compiled out.
-if __debug__:
-    import logging
-    logging.basicConfig(level = logging.INFO)
-    logger = logging.getLogger('holdit')
-    def log(s, *other_args): logger.debug('holdit: ' + s.format(*other_args))
+from holdit.debug import log
 
 
 # Global constants.
@@ -128,7 +119,9 @@ class AccessHandlerGUI(AccessHandlerBase):
         self._dialog = LoginDialog(self._parent_frame)
         self._dialog.initialize_values(self._user, self._pswd)
         wx.CallAfter(self._credentials_from_gui, self._queue)
+        if __debug__: log('AccessHandlerGUI waiting ...')
         self._wait()
+        if __debug__: log('AccessHandlerGUI done waiting')
         self._user, self._pswd, self._cancelled = self._dialog.final_values()
         if self._cancelled:
             raise UserCancelled
@@ -136,6 +129,7 @@ class AccessHandlerGUI(AccessHandlerBase):
 
 
     def _credentials_from_gui(self, queue):
+        if __debug__: log('credentials_from_gui showing dialog')
         self._dialog.set_queue(queue)
         self._dialog.ShowWindowModal()
 
@@ -259,6 +253,7 @@ class LoginDialog(wx.Dialog):
     def on_ok(self, event):
         '''Stores the current values and destroys the dialog.'''
 
+        if __debug__: log('AccessHandlerGUI got OK')
         if self.inputs_nonempty():
             self._cancel = False
             self._user = self.login.GetValue()
@@ -270,6 +265,7 @@ class LoginDialog(wx.Dialog):
 
 
     def on_cancel_or_quit(self, event):
+        if __debug__: log('AccessHandlerGUI got Cancel')
         self._cancel = True
         self.Destroy()
         self.queue.put(True)
@@ -283,6 +279,7 @@ class LoginDialog(wx.Dialog):
 
 
     def on_escape(self, event):
+        if __debug__: log('AccessHandlerGUI got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
             self.on_cancel_or_quit(event)

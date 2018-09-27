@@ -14,7 +14,9 @@ from   threading import Thread
 import webbrowser
 
 import holdit
+from holdit.files import datadir_path, readable
 from holdit.exceptions import *
+from holdit.debug import log
 
 
 # Exported classes.
@@ -180,12 +182,14 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_cancel_or_quit(self, event):
+        if __debug__: log('HolditControlGUI got Exit/Cancel')
         self._cancel = True
         self.Destroy()
         return True
 
 
     def on_escape(self, event):
+        if __debug__: log('HolditControlGUI got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
             self.on_cancel_or_quit(event)
@@ -195,6 +199,7 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_about(self, event):
+        if __debug__: log('HolditControlGUI opening About window')
         dlg = wx.adv.AboutDialogInfo()
         dlg.SetName(holdit.__name__)
         dlg.SetVersion(holdit.__version__)
@@ -207,6 +212,7 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_help(self, event):
+        if __debug__: log('HolditControlGUI opening Help window')
         wx.BeginBusyCursor()
         help_file = path.join(datadir_path(), "help.html")
         if readable(help_file):

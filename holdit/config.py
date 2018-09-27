@@ -22,6 +22,7 @@ import warnings
 
 import holdit
 from holdit.files import module_path
+from holdit.debug import log
 
 
 # Class definitions.
@@ -34,8 +35,10 @@ class Config():
         self._cfg = ConfigParser()
         try:
             with open(cfg_file) as f:
+                if __debug__: log('Reading "{}"', cfg_file)
                 self._cfg.readfp(f)
         except IOError:
+            if __debug__: log('"{}" not found', cfg_file)
             warnings.warn('file "{}" not found'.format(cfg_file))
 
 

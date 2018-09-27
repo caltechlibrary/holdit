@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 import holdit
 from holdit.exceptions import *
 from holdit.records import HoldRecord
+from holdit.debug import log
 
 
 # Global constants.
@@ -118,6 +119,7 @@ class TindRecord(HoldRecord):
 # .............................................................................
 
 def records_from_tind(access_handler, notifier, tracer):
+    if __debug__: log('Getting JSON data from TIND')
     json_data = tind_json(access_handler, notifier, tracer)
     if not json_data:
         return []
@@ -126,6 +128,7 @@ def records_from_tind(access_handler, notifier, tracer):
         num_records = records_data[0][0]
         if num_records < 1:
             return []
+    if __debug__: log('Got {} records from tind.io', num_records)
     records = []
     for json_record in json_data['data']:
         tr = TindRecord(json_record)
@@ -133,6 +136,7 @@ def records_from_tind(access_handler, notifier, tracer):
         # need to retrieve the new holds that are marked "on shelf".
         if 'on shelf' in tr.item_loan_status:
             records.append(tr)
+    if __debug__: log('Returning {} "on shelf" records', len(records))
     return records
 
 
@@ -145,7 +149,14 @@ def tind_json(access_handler, notifier, tracer):
         session.headers.update( { 'user-agent': _USER_AGENT_STRING } )
 
         # Start with the full destination path + Shibboleth login component.
-        res = session.get(_SHIBBED_HOLD_URL, allow_redirects = True)
+        try:
+            if __debug__: log('Issuing network get to tind.io shibboleth URL')
+            res = session.get(_SHIBBED_HOLD_URL, allow_redirects = True)
+            if __debug__: log('Succeeded in network get to tind.io shibboleth URL')
+        except Exception as err:
+            details = 'exception connecting to tind.io: {}'.format(err)
+            notifier.fatal('Failed to connect to tind.io -- try again later', details)
+            return None
         if res.status_code >= 300:
             details = 'tind.io shib request returned status {}'.format(res.status_code)
             notifier.fatal('Unexpected network result -- please inform developers', details)
@@ -159,9 +170,17 @@ def tind_json(access_handler, notifier, tracer):
         sessionid = session.cookies.get('JSESSIONID')
         next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
         login_data = sso_login_data(user, pswd)
-        res = session.post(next_url, data = login_data, allow_redirects = True)
+        try:
+            if __debug__: log('Issuing network post to idp.caltech.edu')
+            res = session.post(next_url, data = login_data, allow_redirects = True)
+            if __debug__: log('Succeeded in network post to idp.caltech.edu')
+        except Exception as err:
+            details = 'exception connecting to idp.caltech.edu: {}'.format(err)
+            notifier.fatal('Failed to connect to tind.io', details)
+            raise ServiceFailure(details)
         logged_in = bool(str(res.content).find('Forgot your password') <= 0)
         if not logged_in and not notifier.yes_no('Incorrect login. Try again?'):
+            if __debug__: log('user cancelled access login')
             raise UserCancelled
 
     # Extract the SAML data and follow through with the action url.
@@ -176,7 +195,14 @@ def tind_json(access_handler, notifier, tracer):
     SAMLResponse = tree.xpath('//input[@name="SAMLResponse"]')[0].value
     RelayState = tree.xpath('//input[@name="RelayState"]')[0].value
     saml_payload = {'SAMLResponse': SAMLResponse, 'RelayState': RelayState}
-    res = session.post(next_url, data = saml_payload, allow_redirects = True)
+    try:
+        if __debug__: log('Issuing network post to {}', next_url)
+        res = session.post(next_url, data = saml_payload, allow_redirects = True)
+        if __debug__: log('Succeeded in issuing network post')
+    except Exception as err:
+        details = 'exception connecting to tind.io: {}'.format(err)
+        notifier.fatal('Unexpected network problem -- try again later', details)
+        return None
     if res.status_code != 200:
         details = 'tind.io action post returned status {}'.format(res.status_code)
         notifier.fatal('Caltech.tind.io circulation page failed to respond', details)
@@ -194,7 +220,14 @@ def tind_json(access_handler, notifier, tracer):
     ajax_url = 'https://caltech.tind.io/admin2/bibcirculation/requests?draw=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=100&search%5Bvalue%5D=&search%5Bregex%5D=false&sort=request_date&sort_dir=asc'
     ajax_headers = {"X-Requested-With": "XMLHttpRequest",
                     "User-Agent": _USER_AGENT_STRING}
-    res = session.get(ajax_url, headers = ajax_headers)
+    try:
+        if __debug__: log('Issuing ajax call to tind.io')
+        res = session.get(ajax_url, headers = ajax_headers)
+        if __debug__: log('Succeeded in issuing ajax call to tind.io')
+    except Exception as err:
+        details = 'exception connecting to tind.io bibcirculation page {}'.format(err)
+        notifier.fatal('Unable to get data from Caltech.tind.io circulation page', details)
+        raise ServiceFailure(details)
     if res.status_code != 200:
         details = 'tind.io ajax get returned status {}'.format(res.status_code)
         notifier.fatal('Caltech.tind.io failed to return hold data', details)

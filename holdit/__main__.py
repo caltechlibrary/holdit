@@ -77,6 +77,7 @@ from holdit.network import network_available
 from holdit.files import readable, writable, open_file
 from holdit.files import rename_existing, desktop_path, module_path
 from holdit.exceptions import *
+from holdit.debug import set_debug, log
 
 
 # Main program.
@@ -87,6 +88,7 @@ from holdit.exceptions import *
     user       = ('Caltech access user name',                        'option', 'u'),
     output     = ('write the output to the file "O"',                'option', 'o'),
     template   = ('use file "F" as the TIND record print template',  'option', 't'),
+    debug      = ('turn on debugging (console only)',                'flag',   'D'),
     no_color   = ('do not color-code terminal output (default: do)', 'flag',   'C'),
     no_gui     = ('do not start the GUI interface (default: do)',    'flag',   'G'),
     no_keyring = ('do not use a keyring (default: do)',              'flag',   'K'),
@@ -97,7 +99,7 @@ from holdit.exceptions import *
 
 def main(user = 'U', pswd = 'P', output='O', template='F',
          no_color=False, no_gui=False, no_keyring=False, no_sheet=False,
-         reset=False, version=False):
+         reset=False, debug=False, version=False):
     '''Generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
@@ -166,6 +168,10 @@ information and exit without doing anything else.
         print('License: {}'.format(holdit.__license__))
         sys.exit()
 
+    # Configure debug logging if it's turned on.
+    if debug:
+        set_debug(True)
+
     # Switch between different ways of getting information from/to the user.
     if use_gui:
         controller = HolditControlGUI()
@@ -179,19 +185,21 @@ information and exit without doing anything else.
         tracer     = ProgressIndicatorCLI(controller, use_color)
 
     # Start the worker thread.
-    controller.start(MainBody(template, output, view_sheet,
+    if __debug__: log('Starting main body thread')
+    controller.start(MainBody(template, output, view_sheet, debug,
                               controller, tracer, accesser, notifier))
 
 
 class MainBody(Thread):
     '''Main body of Holdit! implemented as a Python thread.'''
 
-    def __init__(self, template, output, view_sheet,
+    def __init__(self, template, output, view_sheet, debug,
                  controller, tracer, accesser, notifier):
         Thread.__init__(self, name = "MainBody")
         self._template   = template
         self._output     = output
         self._view_sheet = view_sheet
+        self._debug      = debug
         self._controller = controller
         self._tracer     = tracer
         self._accesser   = accesser
@@ -203,10 +211,11 @@ class MainBody(Thread):
 
 
     def run(self):
-        # Set shortcut variables for better code readability.
+        # Set shortcut variables for better code readability below.
         template   = self._template
         output     = self._output
         view_sheet = self._view_sheet
+        debug      = self._debug
         controller = self._controller
         accesser   = self._accesser
         notifier   = self._notifier
@@ -278,7 +287,8 @@ class MainBody(Thread):
             tracer.stop('Quitting.')
             controller.stop()
         except Exception as err:
-            import pdb; pdb.set_trace()
+            if debug:
+                import pdb; pdb.set_trace()
             tracer.stop('Stopping due to error')
             notifier.fatal(holdit.__title__ + ' encountered an error',
                            str(err) + '\n' + traceback.format_exc())
