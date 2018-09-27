@@ -103,17 +103,27 @@ class HolditMainFrame(wx.Frame):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         self.panel = wx.Panel(self)
-        self.SetSize((self._width, self._height))
-        self.SetTitle(holdit.__name__)
         headline = holdit.__name__ + " — generate a list of hold requests"
         self.headline = wx.StaticText(self.panel, wx.ID_ANY, headline, style = wx.ALIGN_CENTER)
         self.headline.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC,
                                       wx.FONTWEIGHT_BOLD, 0, "Arial"))
-        self.divider = wx.StaticLine(self.panel, wx.ID_ANY)
-        self.divider.SetMinSize((self._width, 2))
-        self.text_area = wx.richtext.RichTextCtrl(self.panel, wx.ID_ANY, size = (self._width, 200),
-                                                  style = wx.TE_MULTILINE|wx.TE_READONLY)
-        self.text_area.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
+
+        # For macos, I figured out how to make the background color of the text
+        # box be the same as the rest of the UI elements.  That looks nicer for
+        # our purposes (IMHO) than the default (which would be white), but then
+        # we need a divider to separate the headline from the text area.
+        if not sys.platform.startswith('win'):
+            self.divider = wx.StaticLine(self.panel, wx.ID_ANY)
+            self.divider.SetMinSize((self._width, 2))
+
+        self.text_area = wx.richtext.RichTextCtrl(self.panel, wx.ID_ANY,
+                                                  size = (self._width, 200),
+                                                  style = wx.TE_MULTILINE | wx.TE_READONLY)
+        # On macos, the color of the text background is set to the same as the
+        # rest of the UI panel.  I haven't figured out how to do it on Windows.
+        if not sys.platform.startswith('win'):
+            gray = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
+            self.text_area.SetBackgroundColour(gray)
 
         # Create a simple menu bar.
         self.menuBar = wx.MenuBar(0)
@@ -153,12 +163,15 @@ class HolditMainFrame(wx.Frame):
         self.SetAcceleratorTable(accel_tbl)
 
         # Finally, deal with layout.
+        self.SetSize((self._width, self._height))
+        self.SetTitle(holdit.__name__)
         self.outermost_sizer = wx.BoxSizer(wx.VERTICAL)
         self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add(self.headline, 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add(self.divider, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        if not sys.platform.startswith('win'):
+            self.outermost_sizer.Add(self.divider, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
+            self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add(self.text_area, 0, wx.EXPAND, 0)
         self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
         self.SetSizer(self.outermost_sizer)
