@@ -45,15 +45,15 @@ from holdit.exceptions import *
 class MessageHandlerBase():
     '''Base class for message-printing classes in Holdit!'''
 
-    def __init__(self, controller):
-        self._controller = controller
+    def __init__(self):
+        pass
 
 
 class MessageHandlerCLI(MessageHandlerBase):
     '''Class for printing console messages and asking the user questions.'''
 
-    def __init__(self, controller, use_color):
-        super().__init__(controller)
+    def __init__(self, use_color):
+        super().__init__()
         self._colorize = use_color
 
 
@@ -88,9 +88,8 @@ class MessageHandlerCLI(MessageHandlerBase):
 class MessageHandlerGUI(MessageHandlerBase):
     '''Class for GUI-based user messages and asking the user questions.'''
 
-    def __init__(self, controller):
-        super().__init__(controller)
-        self._parent_frame = controller.frame
+    def __init__(self):
+        super().__init__()
         self._queue = queue.Queue()
         self._response = None
 
@@ -131,7 +130,7 @@ class MessageHandlerGUI(MessageHandlerBase):
 
     def _note(self, text):
         '''Displays a simple notice with a single OK button.'''
-        frame = wx.Frame(self._parent_frame)
+        frame = wx.Frame(wx.GetApp().TopWindow)
         frame.Center()
         dlg = wx.GenericMessageDialog(frame, text, caption = "Holdit!",
                                       style = wx.OK | wx.ICON_INFORMATION)
@@ -142,7 +141,7 @@ class MessageHandlerGUI(MessageHandlerBase):
 
 
     def _dialog(self, text, details = '', severity = 'error'):
-        frame = wx.Frame(self._parent_frame)
+        frame = wx.Frame(wx.GetApp().TopWindow)
         frame.Center()
         if 'fatal' in severity:
             short = text
@@ -179,7 +178,7 @@ class MessageHandlerGUI(MessageHandlerBase):
 
 
     def _yes_no(self, question):
-        frame = wx.Frame(self._parent_frame)
+        frame = wx.Frame(wx.GetApp().TopWindow)
         frame.Center()
         dlg = wx.GenericMessageDialog(frame, question, caption = "Holdit!",
                                       style = wx.YES_NO | wx.ICON_QUESTION)
