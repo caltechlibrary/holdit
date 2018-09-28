@@ -175,14 +175,14 @@ information and exit without doing anything else.
     # Switch between different ways of getting information from/to the user.
     if use_gui:
         controller = HolditControlGUI()
-        accesser   = AccessHandlerGUI(controller, user, pswd)
-        notifier   = MessageHandlerGUI(controller)
-        tracer     = ProgressIndicatorGUI(controller)
+        accesser   = AccessHandlerGUI(user, pswd)
+        notifier   = MessageHandlerGUI()
+        tracer     = ProgressIndicatorGUI()
     else:
         controller = HolditControlCLI()
-        accesser   = AccessHandlerCLI(controller, user, pswd, use_keyring, reset)
-        notifier   = MessageHandlerCLI(controller, use_color)
-        tracer     = ProgressIndicatorCLI(controller, use_color)
+        accesser   = AccessHandlerCLI(user, pswd, use_keyring, reset)
+        notifier   = MessageHandlerCLI(use_color)
+        tracer     = ProgressIndicatorCLI(use_color)
 
     # Start the worker thread.
     if __debug__: log('Starting main body thread')
