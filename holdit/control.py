@@ -4,8 +4,9 @@ control.py: human interface controller for Holdit!
 
 import os
 import os.path as path
-import queue
+from queue import Queue
 import wx
+from   wx.lib.pubsub import pub
 import wx.adv
 import wx.richtext
 import sys
@@ -59,7 +60,7 @@ class HolditControlGUI(HolditControlBase):
 
     def __init__(self):
         super().__init__()
-        self._app = wx.App(0)
+        self._app = wx.App()
         self._frame = HolditMainFrame(None, wx.ID_ANY, "")
         self._app.SetTopWindow(self._frame)
         self._frame.Center()
@@ -72,25 +73,14 @@ class HolditControlGUI(HolditControlBase):
         return True
 
 
-    @property
-    def frame(self):
-        '''Returns the main application wxPython frame.'''
-        return self._frame
-
-
     def start(self, worker):
         self._worker = worker
-        # The thread needs to be started after starting the wxPython main loop.
-        wx.CallAfter(self._worker.start)
+        self._worker.start()
         self._app.MainLoop()
 
 
     def stop(self):
         wx.CallAfter(self._frame.Destroy)
-
-
-    def write_message(self, message):
-        self._frame.write_message(message)
 
 
 # Internal implementation classes.
@@ -164,7 +154,7 @@ class HolditMainFrame(wx.Frame):
         accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('W'), close_id )])
         self.SetAcceleratorTable(accel_tbl)
 
-        # Finally, deal with layout.
+        # Now that we created all the elements, set layout and placement.
         self.SetSize((self._width, self._height))
         self.SetTitle(holdit.__name__)
         self.outermost_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -179,6 +169,10 @@ class HolditMainFrame(wx.Frame):
         self.SetSizer(self.outermost_sizer)
         self.Layout()
         self.Centre()
+
+        # Finally, hook in message-passing interface.
+        pub.subscribe(self.progress_message, "progress_message")
+        pub.subscribe(self.login_dialog, "login_dialog")
 
 
     def on_cancel_or_quit(self, event):
@@ -221,5 +215,204 @@ class HolditMainFrame(wx.Frame):
         return True
 
 
-    def write_message(self, message):
+    def progress_message(self, message):
         self.text_area.AppendText(message + ' ...\n')
+
+
+    def login_dialog(self, results, user, password):
+        dialog = LoginDialog(self)
+        dialog.initialize_values(results, user, password)
+        dialog.ShowWindowModal()
+
+
+class LoginDialog(wx.Dialog):
+    def __init__(self, *args, **kwargs):
+        super(LoginDialog, self).__init__(*args, **kwargs)
+        self._user = None
+        self._password = None
+        self._cancel = False
+        self._wait_queue = None
+
+        panel = wx.Panel(self)
+        if sys.platform.startswith('win'):
+            self.SetSize((330, 175))
+        else:
+            self.SetSize((330, 155))
+        self.explanation = wx.StaticText(panel, wx.ID_ANY,
+                                         'Holdit! needs your Caltech Access credentials',
+                                         style = wx.ALIGN_CENTER)
+        self.top_line = wx.StaticLine(panel, wx.ID_ANY)
+        self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech login: ", style = wx.ALIGN_RIGHT)
+        self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
+        self.login.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
+        self.login.Bind(wx.EVT_TEXT, self.on_text)
+        self.password_label = wx.StaticText(panel, wx.ID_ANY, "Caltech password: ", style = wx.ALIGN_RIGHT)
+        self.password = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PASSWORD)
+        self.password.Bind(wx.EVT_KEY_DOWN, self.on_enter_or_tab)
+        self.password.Bind(wx.EVT_TEXT, self.on_text)
+        self.bottom_line = wx.StaticLine(panel, wx.ID_ANY)
+        self.cancel_button = wx.Button(panel, wx.ID_ANY, "Cancel")
+        self.cancel_button.Bind(wx.EVT_KEY_DOWN, self.on_escape)
+        self.ok_button = wx.Button(panel, wx.ID_ANY, "OK")
+        self.ok_button.Bind(wx.EVT_KEY_DOWN, self.on_ok_enter_key)
+        self.ok_button.SetDefault()
+        self.ok_button.Disable()
+
+        # Put everything together and bind some keystrokes to events.
+        self.__set_properties()
+        self.__do_layout()
+        self.Bind(wx.EVT_BUTTON, self.on_cancel_or_quit, self.cancel_button)
+        self.Bind(wx.EVT_BUTTON, self.on_ok, self.ok_button)
+        self.Bind(wx.EVT_CLOSE, self.on_cancel_or_quit)
+
+        close_id = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = close_id)
+        accel_tbl = wx.AcceleratorTable([
+            (wx.ACCEL_CTRL, ord('W'), close_id ),
+            (wx.ACCEL_CMD, ord('.'), close_id ),
+        ])
+        self.SetAcceleratorTable(accel_tbl)
+
+
+    def __set_properties(self):
+        self.SetTitle(holdit.__name__)
+        self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
+        self.login.SetMinSize((195, 22))
+        self.password_label.SetToolTip("The account password to use to log in to caltech.tind.io. This should be a Caltech access password.")
+        self.password.SetMinSize((195, 22))
+        self.ok_button.SetFocus()
+
+
+    def __do_layout(self):
+        self.outermost_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.login_sizer = wx.FlexGridSizer(2, 2, 5, 0)
+        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add(self.explanation, 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add(self.top_line, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
+        self.outermost_sizer.Add((360, 8), 0, wx.ALIGN_CENTER, 0)
+        self.login_sizer.Add(self.login_label, 0, wx.ALIGN_RIGHT, 0)
+        self.login_sizer.Add(self.login, 0, wx.EXPAND, 0)
+        self.login_sizer.Add(self.password_label, 0, wx.ALIGN_RIGHT, 0)
+        self.login_sizer.Add(self.password, 0, wx.EXPAND, 0)
+        self.outermost_sizer.Add(self.login_sizer, 1, wx.ALIGN_CENTER | wx.FIXED_MINSIZE, 5)
+        self.outermost_sizer.Add((360, 5), 0, 0, 0)
+        self.outermost_sizer.Add(self.bottom_line, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 0)
+        self.outermost_sizer.Add((360, 5), 0, 0, 0)
+        self.button_sizer.Add((0, 0), 0, 0, 0)
+        self.button_sizer.Add(self.cancel_button, 0, wx.ALIGN_CENTER, 0)
+        self.button_sizer.Add((10, 20), 0, 0, 0)
+        self.button_sizer.Add(self.ok_button, 0, wx.ALIGN_CENTER, 0)
+        self.button_sizer.Add((10, 20), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add(self.button_sizer, 1, wx.ALIGN_RIGHT, 0)
+        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.SetSizer(self.outermost_sizer)
+        self.Layout()
+        self.Centre()
+
+
+    def initialize_values(self, wait_queue, user, password):
+        self._wait_queue = wait_queue
+        self._user = user
+        self._password = password
+        if self._user:
+            self.login.AppendText(self._user)
+            self.login.Refresh()
+        if self._password:
+            self.password.AppendText(self._password)
+            self.password.Refresh()
+
+
+    def return_values(self):
+        if __debug__: log('return_values called')
+        self._wait_queue.put((self._user, self._password, self._cancel))
+
+
+    def inputs_nonempty(self):
+        user = self.login.GetValue()
+        password = self.password.GetValue()
+        if user.strip() and password.strip():
+            return True
+        return False
+
+
+    def on_ok(self, event):
+        '''Stores the current values and destroys the dialog.'''
+
+        if __debug__: log('AccessHandlerGUI got OK')
+        if self.inputs_nonempty():
+            self._cancel = False
+            self._user = self.login.GetValue()
+            self._password = self.password.GetValue()
+            self.return_values()
+            # self.Destroy()
+            self.return_values()
+            self.EndModal(event.EventObject.Id)
+        else:
+            self.complain_incomplete_values(event)
+
+
+    def on_cancel_or_quit(self, event):
+        if __debug__: log('AccessHandlerGUI got Cancel')
+        self._cancel = True
+        self.return_values()
+        # self.Destroy()
+        self.return_values()
+        self.EndModal(event.EventObject.Id)
+
+
+    def on_text(self, event):
+        if self.login.GetValue() and self.password.GetValue():
+            self.ok_button.Enable()
+        else:
+            self.ok_button.Disable()
+
+
+    def on_escape(self, event):
+        if __debug__: log('AccessHandlerGUI got Escape')
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_ESCAPE:
+            self.on_cancel_or_quit(event)
+        else:
+            event.Skip()
+
+
+    def on_ok_enter_key(self, event):
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER, wx.WXK_SPACE]:
+            self.on_ok(event)
+        elif keycode == wx.WXK_ESCAPE:
+            self.on_cancel_or_quit(event)
+        else:
+            event.EventObject.Navigate()
+
+
+    def on_enter_or_tab(self, event):
+        keycode = event.GetKeyCode()
+        if keycode in [wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER]:
+            # If the ok button is enabled, we interpret return/enter as "done".
+            if self.ok_button.IsEnabled():
+                self.on_ok(event)
+            # If focus is on the login line, move to password.
+            if wx.Window.FindFocus() is self.login:
+                event.EventObject.Navigate()
+        elif keycode == wx.WXK_TAB:
+            event.EventObject.Navigate()
+        elif keycode == wx.WXK_ESCAPE:
+            self.on_cancel_or_quit(event)
+        else:
+            event.Skip()
+
+
+    def complain_incomplete_values(self, event):
+        dialog = wx.MessageDialog(self, caption = "Missing login and/or password",
+                                  message = "Incomplete values – do you want to quit?",
+                                  style = wx.YES_NO | wx.ICON_WARNING,
+                                  pos = wx.DefaultPosition)
+        response = dialog.ShowModal()
+        dialog.EndModal(wx.OK)
+        dialog.Destroy()
+        if (response == wx.ID_YES):
+            self._cancel = True
+            self.return_values()
