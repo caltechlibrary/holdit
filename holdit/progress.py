@@ -19,6 +19,7 @@ import sys
 import time
 import wx
 import wx.lib.dialogs
+from   wx.lib.pubsub import pub
 
 try:
     from termcolor import colored
@@ -31,6 +32,7 @@ except:
 import holdit
 from holdit.exceptions import *
 from holdit.messages import color, msg
+from holdit.debug import log
 
 
 # Exported classes.
@@ -46,15 +48,14 @@ from holdit.messages import color, msg
 
 class ProgressIndicatorBase():
 
-    def __init__(self, controller):
-        '''Initialize internal data with the controller instance.'''
-        self._controller = controller
+    def __init__(self):
+        pass
 
 
 class ProgressIndicatorCLI(ProgressIndicatorBase):
 
-    def __init__(self, controller, use_color):
-        super().__init__(controller)
+    def __init__(self, use_color):
+        super().__init__()
         self._colorize = use_color
         self._spinner = None
         self._current_message = ''
@@ -95,12 +96,15 @@ class ProgressIndicatorCLI(ProgressIndicatorBase):
 class ProgressIndicatorGUI(ProgressIndicatorBase):
 
     def start(self, message = None):
-        wx.CallAfter(self._controller.write_message, message)
+        if __debug__: log('sending message to progress_message for start')
+        wx.CallAfter(pub.sendMessage, "progress_message", message = message)
 
 
     def update(self, message = None, count = None):
-        wx.CallAfter(self._controller.write_message, message)
+        if __debug__: log('sending message to progress_message for update')
+        wx.CallAfter(pub.sendMessage, "progress_message", message = message)
 
 
     def stop(self, message = None):
-        wx.CallAfter(self._controller.write_message, message)
+        if __debug__: log('sending message to progress_message for stop')
+        wx.CallAfter(pub.sendMessage, "progress_message", message = message)
