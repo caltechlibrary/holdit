@@ -340,7 +340,7 @@ class LoginDialog(wx.Dialog):
     def on_ok(self, event):
         '''Stores the current values and destroys the dialog.'''
 
-        if __debug__: log('AccessHandlerGUI got OK')
+        if __debug__: log('LoginDialog got OK')
         if self.inputs_nonempty():
             self._cancel = False
             self._user = self.login.GetValue()
@@ -354,7 +354,7 @@ class LoginDialog(wx.Dialog):
 
 
     def on_cancel_or_quit(self, event):
-        if __debug__: log('AccessHandlerGUI got Cancel')
+        if __debug__: log('LoginDialog got Cancel')
         self._cancel = True
         self.return_values()
         # self.Destroy()
@@ -370,7 +370,7 @@ class LoginDialog(wx.Dialog):
 
 
     def on_escape(self, event):
-        if __debug__: log('AccessHandlerGUI got Escape')
+        if __debug__: log('LoginDialog got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
             self.on_cancel_or_quit(event)
