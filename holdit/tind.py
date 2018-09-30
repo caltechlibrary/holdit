@@ -119,7 +119,7 @@ class TindRecord(HoldRecord):
 # .............................................................................
 
 def records_from_tind(access_handler, notifier, tracer):
-    if __debug__: log('Getting JSON data from TIND')
+    if __debug__: log('Starting procedure for connecting to tind.io')
     json_data = tind_json(access_handler, notifier, tracer)
     if not json_data:
         return []
@@ -156,15 +156,19 @@ def tind_json(access_handler, notifier, tracer):
         except Exception as err:
             details = 'exception connecting to tind.io: {}'.format(err)
             notifier.fatal('Failed to connect to tind.io -- try again later', details)
-            return None
+            raise ServiceFailure(details)
         if res.status_code >= 300:
             details = 'tind.io shib request returned status {}'.format(res.status_code)
             notifier.fatal('Unexpected network result -- please inform developers', details)
             raise ServiceFailure(details)
 
         # Now do the login step.
-        user, pswd = access_handler.name_and_password()
+        user, pswd, cancelled = access_handler.name_and_password()
+        if cancelled:
+            if __debug__: log('user cancelled out of login dialog')
+            raise UserCancelled
         if not user or not pswd:
+            if __debug__: log('empty values returned from login dialog')
             return None
         tree = html.fromstring(res.content)
         sessionid = session.cookies.get('JSESSIONID')
@@ -202,7 +206,7 @@ def tind_json(access_handler, notifier, tracer):
     except Exception as err:
         details = 'exception connecting to tind.io: {}'.format(err)
         notifier.fatal('Unexpected network problem -- try again later', details)
-        return None
+        raise ServiceFailure(details)
     if res.status_code != 200:
         details = 'tind.io action post returned status {}'.format(res.status_code)
         notifier.fatal('Caltech.tind.io circulation page failed to respond', details)
