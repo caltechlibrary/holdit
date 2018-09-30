@@ -29,7 +29,8 @@ configuration = Analysis(['holdit/__main__.py'],
                          # For reasons I can't figure out, PyInstaller tries
                          # to load these even though they're never imported
                          # by the Holdit code.  Have to exclude them manually.
-                         excludes = ['PyQt4', 'PyQt5', 'gtk', 'matplotlib'],
+                         excludes = ['PyQt4', 'PyQt5', 'gtk', 'matplotlib',
+                                     'numpy'],
                          win_no_prefer_redirects = False,
                          win_private_assemblies = False,
                          cipher = None,
