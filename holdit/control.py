@@ -4,9 +4,9 @@ control.py: human interface controller for Holdit!
 
 import os
 import os.path as path
-from queue import Queue
+from   pubsub import pub
+from   queue import Queue
 import wx
-from   wx.lib.pubsub import pub
 import wx.adv
 import wx.richtext
 import sys

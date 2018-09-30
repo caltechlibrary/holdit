@@ -15,11 +15,11 @@ file "LICENSE" for more information.
 '''
 
 from   halo import Halo
+from   pubsub import pub
 import sys
 import time
 import wx
 import wx.lib.dialogs
-from   wx.lib.pubsub import pub
 
 try:
     from termcolor import colored
