@@ -350,6 +350,7 @@ class LoginDialog(wx.Dialog):
             self.return_values()
             self.EndModal(event.EventObject.Id)
         else:
+            if __debug__: log('LoginDialog has incomplete inputs')
             self.complain_incomplete_values(event)
 
 
@@ -370,9 +371,9 @@ class LoginDialog(wx.Dialog):
 
 
     def on_escape(self, event):
-        if __debug__: log('LoginDialog got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
+            if __debug__: log('LoginDialog got Escape')
             self.on_cancel_or_quit(event)
         else:
             event.Skip()
