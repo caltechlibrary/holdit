@@ -286,6 +286,9 @@ class MainBody(Thread):
         except (KeyboardInterrupt, UserCancelled) as err:
             tracer.stop('Quitting.')
             controller.stop()
+        except ServiceFailure:
+            tracer.stop('Stopping due to a problem connecting to services')
+            controller.stop()
         except Exception as err:
             if debug:
                 import pdb; pdb.set_trace()
