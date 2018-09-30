@@ -204,7 +204,7 @@ class MainBody(Thread):
         self._tracer     = tracer
         self._accesser   = accesser
         self._notifier   = notifier
-        if controller.is_gui:
+        if controller.is_gui and not sys.platform.startswith('win'):
             # Only make this a daemon thread when using the GUI; for CLI, it
             # must not be a daemon thread or else Holdit! exits immediately.
             self.daemon = True
