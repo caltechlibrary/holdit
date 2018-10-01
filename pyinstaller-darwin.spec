@@ -56,7 +56,7 @@ executable         = EXE(application_pyz,
 
 app             = BUNDLE(executable,
                          name = 'HoldIt.app',
-                         icon = 'dev/icons/holdit.icns',
+                         icon = 'dev/icons/generated-icons/holdit-icon-256px.icns',
                          bundle_identifier = None,
                          info_plist = {'NSHighResolutionCapable': 'True',
                                        'NSAppleScriptEnabled': False},
