@@ -4,37 +4,32 @@ Holdit!<img width="100px" align="right" src=".graphics/holdit-icon-256px.png">
 _Holdit!_ is a small application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
 
 *Authors*:      [Michael Hucka](http://github.com/mhucka)<br>
-*Repository*:   [https://github.com/caltechlibrary/urlup](https://github.com/caltechlibrary/@@REPO@@)<br>
+*Repository*:   [https://github.com/caltechlibrary/holdit](https://github.com/caltechlibrary/holdit)<br>
 *License*:      BSD/MIT derivative &ndash; see the [LICENSE](LICENSE) file for more information
+
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=flat-square)](https://choosealicense.com/licenses/bsd-3-clause)
+[![Python](https://img.shields.io/badge/Python-3.4+-brightgreen.svg?style=flat-square)](http://shields.io)
+[![Latest release](https://img.shields.io/badge/Latest_release-1.0.0-b44e88.svg?style=flat-square)](http://shields.io)
 
 ☀ Introduction
 -----------------------------
 
-The Caltech Library's Circulation Desk handles, among other things, requests by patrons to put books or other materials on hold.  However, the catalog management software does not have a simple way to produce a printable list of items to hold.  The staff who go to the stacks to find materials have to look up the information from the LIMS system used by Caltech (TIND), write the information on paper, and update a Google spreadsheet used to track requests.
+The Caltech Library's Circulation Desk handles, among other things, requests by patrons to put books or other materials on hold.  However, the catalog management software does not have a simple way to produce a printable list of items to hold.  The staff who go to the stacks to find materials have to look up the information from the information management system used by Caltech (TIND), write the information on paper, and update a Google spreadsheet used to track requests.
 
 _Holdit!_ is aimed at automating more of this procedure to reduce frustration and possible errors.  It uses Shibboleth to log in to the Caltech Library system, scrapes TIND to get the necessary information, produces a printable document (based on a customizable template), and updates the Google spreadsheet used to track holds.
 
 ✺ Installation instructions
 ---------------------------
 
-The following is probably the simplest and most direct way to install this software on your computer:
-```sh
-sudo pip3 install git+https://github.com/caltechlibrary/holdit.git
-```
+The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program.
 
-Alternatively, you can clone this GitHub repository and then run `setup.py`:
-```sh
-git clone https://github.com/caltechlibrary/holdit.git
-cd holdit
-sudo python3 -m pip install .
-```
 
 ▶︎ Basic operation
 ------------------
 
-<img align="right" width="40%" src=".graphics/holdit-login-dialog.png">
+<img align="right" width="50%" src=".graphics/holdit-initial-window.png">
 
-_Holdit!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and it asks for login credentials for Caltech.tind.io. The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
+_Holdit!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and _Holdit!_ creates a main window, then immediately begins its work by connecting to Caltech.tind.io and asking the user for login credentials.  The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
 
 1. Searches Caltech.tind.io for the most recent hold requests
 2. Scrapes the HTML page returned by the TIND search
@@ -44,9 +39,9 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 6. Creates a Word document listing the latest hold requests (if any)
 7. Opens the Word document so that the user can print it
 
-_Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
+Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
 
-The Word document is created from a template Word file unimaginatively named `template.docx`, which _Holdit!_ looks for in the same folder where the program is found.  Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
+The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the program is found.  Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
 
 | Variable | Meaning |
 |----------|---------|
@@ -91,8 +86,27 @@ If you find an issue, please submit it in [the GitHub issue tracker](https://git
 ☺︎ Acknowledgments
 -----------------------
 
-The vector artwork used as a logo for Holdit was created by [Yo! Baba](https://thenounproject.com/vectormarket01/) and obtained from the [Noun Project](https://thenounproject.com/search/?q=hold&i=1022878).  It is licensed under the Creative Commons [CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/) license.
+The vector artwork used as part of the logo for _Holdit!_ was created by [Yo! Baba](https://thenounproject.com/vectormarket01/) and obtained from the [Noun Project](https://thenounproject.com/search/?q=hold&i=1022878).  It is licensed under the Creative Commons [CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/) license.
 
+_Holdit!_ was makes use of numerous open-source packages, without which it would have been effectively impossible to develop Turf with the resources we had.  We want to acknowledge this debt.  In alphabetical order, the packages are:
+
+* [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) &ndash; an HTML parsing library
+* [colorama](https://github.com/tartley/colorama) &ndash; makes ANSI escape character sequences work under MS Windows terminals
+* [docx](https://github.com/python-openxml/python-docx) &ndash; a library for creating and updating Microsoft Word (`.docx`) files
+* [docxcompose](https://github.com/4teamwork/docxcompose) &ndash; a library for concatenating/appending Microsoft Word (`.docx`) files
+* [google-api-core, google-api-python-client, google-auth, google-auth-httplib2, google-cloud, google-cloud-vision, googleapis-common-protos, google_api_python_client](https://github.com/googleapis/google-cloud-python) &ndash; Google API libraries 
+* [halo](https://github.com/ManrajGrover/halo) &ndash; busy-spinners for Python command-line programs
+* [httplib2](https://github.com/httplib2/httplib2) &ndash; a comprehensive HTTP client library
+* [ipdb](https://github.com/gotcha/ipdb) &ndash; the IPython debugger
+* [keyring](https://github.com/jaraco/keyring) &ndash; a library to access the system keyring service from Python
+* [lxml](https://lxml.de) &ndash; an XML parsing library for Python
+* [oauth2client](https://github.com/googleapis/oauth2client) &ndash; Google OAuth 2.0 library
+* [plac](http://micheles.github.io/plac/) &ndash; a command line argument parser
+* [pypubsub](https://github.com/schollii/pypubsub) &ndash; a publish-and-subscribe message-passing library for Python
+* [requests](http://docs.python-requests.org) &ndash; an HTTP library for Python
+* [setuptools](https://github.com/pypa/setuptools) &ndash; library for `setup.py`
+* [termcolor](https://pypi.org/project/termcolor/) &ndash; ANSI color formatting for output in terminal
+* [wxPython](https://wxpython.org) &ndash; a cross-platform GUI toolkit for the Python language
 
 ☮︎ Copyright and license
 ---------------------
