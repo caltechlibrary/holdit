@@ -77,10 +77,13 @@ class AccessHandlerCLI(AccessHandlerBase):
 
 
     def name_and_password(self):
-        '''Returns a tuple of user, password.'''
+        '''Returns a tuple of user, password, and a Boolean indicating
+        whether the user cancelled the dialog.  (The last will always be False
+        in this CLI version of the method.)
+        '''
         tmp_user = self._user
         tmp_pswd = self._pswd
-        if not all([tmp_user, tmp_pswd]) or self._reset or not self._use_keyring: 
+        if not all([tmp_user, tmp_pswd]) or self._reset or not self._use_keyring:
             if self._use_keyring and not self._reset:
                 if __debug__: log('Getting credentials from keyring')
                 tmp_user, tmp_pswd, _, _ = credentials(_KEYRING, "Caltech access login",
@@ -100,7 +103,7 @@ class AccessHandlerCLI(AccessHandlerBase):
                     save_keyring_credentials(_KEYRING, tmp_user, tmp_pswd)
         self._user = tmp_user
         self._pswd = tmp_pswd
-        return self._user, self._pswd
+        return self._user, self._pswd, False
 
 
 class AccessHandlerGUI(AccessHandlerBase):

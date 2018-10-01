@@ -21,6 +21,9 @@ from holdit.debug import log
 
 # Class definitions.
 # .............................................................................
+# The particular set of fields in this object came from the TIND holds page
+# contents and a few additional fields kept in the tracking spreadsheet by
+# the Caltech Library circulation staff.
 
 class HoldRecord(object):
     '''Base class for records describing a hold request.'''

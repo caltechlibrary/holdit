@@ -1,5 +1,59 @@
-'''
-control.py: human interface controller for Holdit!
+'''control.py: human interface controller for Holdit!
+
+After trying alternatives and failing to get things to work, I settled on the
+following approach that works on both Mac and Windows 10 in my testing.
+
+The constrol structure of Holdit! is somewhat inverted from what a typical
+WxPython application would look like.  The typical application would be
+purely event-driven: it would be implemented as an object derived from
+wx.Frame with methods for different kinds of actions that the user can
+trigger by interacting with controls in the GUI.  Once the WxPython
+app.MainLoop() function is called, nothing happens until the user does
+something to trigger an activitiy.  Conversely, in Holdit's case, I not only
+wanted to allow command-line based interaction, but also wanted the entire
+process to be started as soon as the user starts the Holdit application.
+This is incompatible with the typical event-driven application structure
+because there's an explicit sequential driver and it needs to be kicked off
+automatically after app.MainLoop() is called.
+
+The approach taken here has two main features.
+
+* First, there are two threads running: one for the WxPython GUI MainLoop()
+  code and all GUI objects (like MainFrame and LoginDialog in this file), and
+  another thread for the real main body that implements Holdit's sequence of
+  operations.  The main thread is kicked off by HolditControlGUI's start()
+  method right before calling app.MainLoop().
+
+* Second, the main body thread invokes GUI operations using a combination of
+  in-application message passing (using a publish-and-subscribe scheme from
+  PyPubsub) and the use of wx.CallAfter().  The MainFrame objects implement
+  some methods that can be invoked by other classes, and MainFrame defines
+  subscriptions for messages to invoke those methods.  Callers then have to
+  use the following idiom to invoke the methods:
+
+    wx.CallAfter(pub.sendMessage, "name", arg1 = "value1", arg2 = "value2")
+
+  The need for this steps from the fact that in WxPython, if you attempt to
+  invoke a GUI method from outside the main thread, it will either generate
+  an exception or (what I often saw on Windows) simply hang the application.
+  wx.CallAfter places the execution into the thread that's running
+  MainLoop(), thus solving the problem.
+
+Splitting up the GUI and CLI schemes into separate objects is for the sake of
+code modularity and conceptual clarity.
+
+Authors
+-------
+
+Michael Hucka <mhucka@caltech.edu> -- Caltech Library
+
+Copyright
+---------
+
+Copyright (c) 2018 by the California Institute of Technology.  This code is
+open-source software released under a 3-clause BSD license.  Please see the
+file "LICENSE" for more information.
+
 '''
 
 import os
@@ -75,7 +129,8 @@ class HolditControlGUI(HolditControlBase):
 
     def start(self, worker):
         self._worker = worker
-        self._worker.start()
+        if worker:
+            self._worker.start()
         self._app.MainLoop()
 
 
@@ -87,6 +142,8 @@ class HolditControlGUI(HolditControlBase):
 # .............................................................................
 
 class HolditMainFrame(wx.Frame):
+    '''Defines the main application GUI frame.'''
+
     def __init__(self, *args, **kwds):
         self._cancel = False
         self._height = 275 if sys.platform.startswith('win') else 250
@@ -220,12 +277,15 @@ class HolditMainFrame(wx.Frame):
 
 
     def login_dialog(self, results, user, password):
+        if __debug__: log('HolditControlGUI creating and showing login dialog')
         dialog = LoginDialog(self)
         dialog.initialize_values(results, user, password)
         dialog.ShowWindowModal()
 
 
 class LoginDialog(wx.Dialog):
+    '''Defines the modal dialog used for getting the user's login credentials.'''
+
     def __init__(self, *args, **kwargs):
         super(LoginDialog, self).__init__(*args, **kwargs)
         self._user = None
@@ -313,6 +373,17 @@ class LoginDialog(wx.Dialog):
 
 
     def initialize_values(self, wait_queue, user, password):
+        '''Initializes values used to populate the dialog and communicate
+        with calling code.
+
+        'wait_queue' must be a Python queue.Queue() object.  Callers must
+        create the queue object and pass it to this function.  After creating
+        and displaying the dialog, callers can use .get() on the queue object
+        to wait until the user has either clicked OK or Cancel in the dialog.
+
+        'user' and 'password' are used to populate the credentials form in
+        case there are preexisting values to be used as defaults.'''
+
         self._wait_queue = wait_queue
         self._user = user
         self._password = password

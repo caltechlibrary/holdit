@@ -34,6 +34,7 @@ if __debug__:
 # .............................................................................
 
 def set_debug(enabled):
+    '''Turns on debug logging if 'enabled' is True; turns it off otherwise.'''
     if __debug__:
         from logging import DEBUG, WARNING
         logging.getLogger('holdit').setLevel(DEBUG if enabled else WARNING)

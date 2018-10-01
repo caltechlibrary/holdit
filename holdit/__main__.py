@@ -195,6 +195,7 @@ class MainBody(Thread):
 
     def __init__(self, template, output, view_sheet, debug,
                  controller, tracer, accesser, notifier):
+        '''Initializes main thread object but does not start the thread.'''
         Thread.__init__(self, name = "MainBody")
         self._template   = template
         self._output     = output
@@ -260,6 +261,7 @@ class MainBody(Thread):
             google_records = records_from_google(spreadsheet_id, accesser.user, notifier)
             missing_records = records_diff(google_records, tind_records)
             new_records = list(filter(records_filter('all'), missing_records))
+            if __debug__: log('diff + filter => {} records'.format(len(new_records)))
 
             if len(new_records) > 0:
                 # Update the spreadsheet with new records.
