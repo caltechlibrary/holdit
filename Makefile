@@ -22,7 +22,7 @@ build: | dependencies build-$(platform)
 
 # Platform-specific instructions.
 
-build-darwin: dist/Holdit.app # ABOUT.html NEWS.html
+build-darwin: dist/Holdit.app ABOUT.html # NEWS.html
 #	packagesbuild dev/installer-builders/macos/packages-config/Holdit.pkgproj
 #	mv dist/Holdit-mac.pkg dist/Holdit-$(release)-macos-$(macos_vers).pkg 
 
@@ -37,7 +37,6 @@ dist/Holdit.app:
 dist/holdit dist/Holdit.exe:
 	pyinstaller --clean pyinstaller-$(platform).spec
 
-# This is ugly, but what this
 dependencies:;
 	pip3 install -r requirements.txt
 
