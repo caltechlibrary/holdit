@@ -166,6 +166,8 @@ def spreadsheet_credentials(user, message_handler):
     store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
+
+
         if __debug__: log('Using secrets file for Google API')
         secrets_file = path.join(datadir_path(), _SECRETS_FILE)
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
@@ -174,6 +176,8 @@ def spreadsheet_credentials(user, message_handler):
         # happening, but hacked around it this way:
         sys.argv = sys.argv[:1]
         creds = tools.run_flow(flow, store)
+
+
     if not creds:
         message_handler.error('Failed to get Google API token')
         raise InternalError('Failed to get Google API token')
