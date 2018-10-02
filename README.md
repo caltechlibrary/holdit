@@ -87,6 +87,12 @@ More general information about building the _Holdit!_ application can be found i
 If you find an issue, please submit it in [the GitHub issue tracker](https://github.com/caltechlibrary/holdit/issues) for this repository.
 
 
+★ Do you like it?
+------------------
+
+If you like this software, don't forget to give this repo a star on GitHub to show your support!
+
+
 ☺︎ Acknowledgments
 -----------------------
 
