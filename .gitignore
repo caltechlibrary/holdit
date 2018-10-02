@@ -67,5 +67,6 @@ __pycache__
 
 build
 dist
+README.html
 ABOUT.html
 *.~is
