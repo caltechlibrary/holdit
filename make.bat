@@ -12,6 +12,13 @@ REM   2. cd into this directory
 REM   3. run "make.bat"
 REM ===========================================================================
 
+ECHO Removing "dist" and "build" subdirectories.
+
+RD /S /Q dist build
+
+ECHO Starting PyInstaller ...
+
 pyinstaller --clean pyinstaller-win32.spec
 
-echo "The .exe will be in the 'dist' subdirectory"
+ECHO "make.bat" finished.
+ECHO The .exe will be in the "dist" subdirectory.
