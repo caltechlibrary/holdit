@@ -23,6 +23,8 @@ _Holdit!_ is aimed at automating more of this procedure to reduce frustration an
 
 The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program.
 
+You can also build _Holdit!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
+
 
 ▶︎ Basic operation
 ------------------
@@ -75,6 +77,8 @@ For security reasons, the files checked into the repository do not include all t
 
 1. The value of `spreadsheet_id` in the file [holdit/holdit.ini](holdit/holdit.ini) must be set to the correct Google spreadsheet identifier.  (Namely, the identifier of the spreadsheet used by the Caltech Library circulation group to track holds.)
 2. A `credentials.json` file must be placed in the directory where Holdit! is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
+
+More general information about building the _Holdit!_ application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki) on GitHub.
 
 
 ⁇ Getting help and support
