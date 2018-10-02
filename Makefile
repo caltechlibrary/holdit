@@ -45,6 +45,7 @@ dependencies:;
 ABOUT.html: README.md
 	pandoc --standalone --quiet -f gfm -H $(github-css) -o README.html README.md
 	inliner -n < README.html > ABOUT.html
+	rm -f README.html
 
 NEWS.html: NEWS.md
 	pandoc --standalone --quiet -f gfm -H $(github-css) -o NEWS.html NEWS.md
