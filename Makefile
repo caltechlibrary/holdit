@@ -33,6 +33,7 @@ dist/Holdit.app:
 	pyinstaller --clean pyinstaller-$(platform).spec
 	sed -i '' -e 's/0.0.0/$(release)/' dist/Holdit.app/Contents/Info.plist
 	rm -f dist/Holdit.app/Contents/Info.plist.bak
+	rm -f dist/holdit
 
 dist/holdit dist/Holdit.exe:
 	pyinstaller --clean pyinstaller-$(platform).spec
