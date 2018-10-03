@@ -74,8 +74,8 @@ from holdit.tind import records_from_tind
 from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import printable_doc
 from holdit.network import network_available
-from holdit.files import readable, writable, open_file
-from holdit.files import rename_existing, desktop_path, module_path
+from holdit.files import readable, writable, open_file, rename_existing
+from holdit.files import desktop_path, module_path, holdit_path
 from holdit.exceptions import *
 from holdit.debug import set_debug, log
 
@@ -240,9 +240,16 @@ class MainBody(Thread):
             if template:
                 temp = path.abspath(template)
                 if readable(temp):
+                    if __debug__: log('Using user-supplied template "{}"'.format(temp))
                     template_file = temp
                 else:
                     notifier.warn('File "{}" not readable -- using default.'.format(template))
+            else:
+                # Check for "template.docx" in the Holdit installation dir.
+                temp = path.abspath(path.join(holdit_path(), "template.docx"))
+                if readable(temp):
+                    if __debug__: log('Using template found at "{}"'.format(temp))
+                    template_file = temp
 
             # Sanity check against possible screwups in creating the Holdit! app.
             # Do them here so that we can fail early if we know we can't finish.
