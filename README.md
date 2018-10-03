@@ -21,7 +21,7 @@ _Holdit!_ is aimed at automating more of this procedure to reduce frustration an
 ✺ Installation instructions
 ---------------------------
 
-The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program.
+The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program.  Note also that installation of _Holdit!_ on Windows requires administrator priviledges.
 
 You can also build _Holdit!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
 
@@ -43,7 +43,11 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 
 Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
 
-The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the program is found.  Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
+The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the _Holdit!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Holdit` or wherever the user installed the application.)
+
+<p align="center"><img width="400px" src=".graphics/holdit-template.png"></p>
+
+Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
 
 | Variable | Meaning |
 |----------|---------|
