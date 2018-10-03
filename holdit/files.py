@@ -21,6 +21,13 @@ import subprocess
 import webbrowser
 
 import holdit
+from holdit.debug import log
+
+
+# Constants.
+# .............................................................................
+
+_HOLDIT_REG_PATH = r'Software\Caltech Library\Holdit\Settings'
 
 
 # Main functions.
@@ -47,9 +54,21 @@ def holdit_path():
     '''Returns the path to where Holdit is installed.'''
     # The path returned by module.__path__ is to the directory containing
     # the __init__.py file.  What we want here is the path to the installation
-    # of the Holdit binary.  I don't know how to get that in a os-independent
-    # way, so I'm punting here.
-    return path.abspath(path.join(module_path(), '..'))
+    # of the Holdit binary.
+    if sys.platform.startswith('win'):
+        from winreg import OpenKey, CloseKey, QueryValueEx, HKEY_LOCAL_MACHINE, KEY_READ
+        try:
+            if __debug__: log('Reading Windows registry entry')
+            key = OpenKey(HKEY_LOCAL_MACHINE, _HOLDIT_REG_PATH)
+            value, regtype = QueryValueEx(key, 'Path')
+            CloseKey(key)
+            if __debug__: log('Path to windows installation: {}'.format(value))
+            return value
+        except WindowsError:
+            # Kind of a problem. Punt and return a default value.
+            return path.abspath('C:\Program Files\Holdit')
+    else:
+        return path.abspath(path.join(module_path(), '..'))
 
 
 def desktop_path():
