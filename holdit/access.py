@@ -106,6 +106,16 @@ class AccessHandlerCLI(AccessHandlerBase):
         return self._user, self._pswd, False
 
 
+    @property
+    def user(self):
+        return self._user
+
+
+    @property
+    def password(self):
+        return self._pswd
+
+
 class AccessHandlerGUI(AccessHandlerBase):
     '''Class to use a GUI to ask the user for credentials.'''
 
@@ -126,4 +136,16 @@ class AccessHandlerGUI(AccessHandlerBase):
         results_tuple = results.get()
         if __debug__: log('name_and_password results obtained')
         # Results will be a tuple of user, password, cancelled
+        self._user = results_tuple[0]
+        self._pswd = results_tuple[1]
         return results_tuple[0], results_tuple[1], results_tuple[2]
+
+
+    @property
+    def user(self):
+        return self._user
+
+
+    @property
+    def password(self):
+        return self._pswd
