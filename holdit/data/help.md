@@ -18,6 +18,18 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
 
 
+How new holds are found
+-----------------------
+
+"New holds" are determined in the following way: Holdit searches the circulation list in caltech.tind.io for items with status code 24 (which is the item status "on shelf"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records found in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus a search for status code 24 will no longer retrieve it.
+
+<p align="center"><img width="800px" src=".graphics/tind-holds.png"></p>
+
+An implication of this approach is that until the item status is changed in TIND, re-running Holdit will produce the same records.  Holdit also does not rely on any column in the tracking spreadsheet to be changed manually: it only adds rows for records it finds in TIND that have never been entered in the spreadsheet (based on the combination of bar code and request date).  Users are free to fill out the "status" and "staff initials" and other columns in the spreadsheet in whatever way they way.  _Holdit!_ does fill out one column in the spreadsheet, the "HOLDIT USER", to indicate who ran the program when it added rows to the spreadsheet.  This also makes it easier for users to fill out the "STAFF INITIAL" column to manually indicate that a hold has been fulfilled.  (However, changing the spreadsheet does not affect the record in caltech.tind.io.)
+
+<p align="center"><img width="900px" src=".graphics/google-spreadsheet.png"></p>
+
+
 Customizing the Word template
 -----------------------------
 
