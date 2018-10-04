@@ -11,6 +11,18 @@ _Holdit!_ is a small application written for the Caltech Library's Circulation t
 [![Python](https://img.shields.io/badge/Python-3.4+-brightgreen.svg?style=flat-square)](http://shields.io)
 [![Latest release](https://img.shields.io/badge/Latest_release-1.0.0-b44e88.svg?style=flat-square)](http://shields.io)
 
+Table of Contents
+-----------------
+* [Introduction](#-introduction)
+* [Installation instructions](#-installation-instructions)
+* [Basic operation](#︎-basic-operation)
+* [Configuration](#-configuration)
+* [Getting help and support](#-getting-help-and-support)
+* [Do you like it?](#-do-you-like-it)
+* [Acknowledgments](#︎-acknowledgments)
+* [Copyright and license](#︎-copyright-and-license)
+
+
 ☀ Introduction
 -----------------------------
 
