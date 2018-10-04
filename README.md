@@ -134,6 +134,7 @@ _Holdit!_ was makes use of numerous open-source packages, without which it would
 * [lxml](https://lxml.de) &ndash; an XML parsing library for Python
 * [oauth2client](https://github.com/googleapis/oauth2client) &ndash; Google OAuth 2.0 library
 * [plac](http://micheles.github.io/plac/) &ndash; a command line argument parser
+* [PyInstaller](http://www.pyinstaller.org) &ndash; a packaging program that creates standalone applications from Python programs for Windows, macOS, Linux and other platforms
 * [pypubsub](https://github.com/schollii/pypubsub) &ndash; a publish-and-subscribe message-passing library for Python
 * [requests](http://docs.python-requests.org) &ndash; an HTTP library for Python
 * [setuptools](https://github.com/pypa/setuptools) &ndash; library for `setup.py`
