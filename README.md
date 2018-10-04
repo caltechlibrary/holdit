@@ -33,7 +33,7 @@ _Holdit!_ is aimed at automating more of this procedure to reduce frustration an
 ✺ Installation instructions
 ---------------------------
 
-The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program.  Note also that installation of _Holdit!_ on Windows requires administrator priviledges.
+The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program for Windows 7, Windows 10, or macOS 10.12+.  Note also that installation of _Holdit!_ on Windows requires administrator priviledges.
 
 You can also build _Holdit!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
 
