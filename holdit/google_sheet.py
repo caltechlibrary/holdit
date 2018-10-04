@@ -205,7 +205,7 @@ def update_google(gs_id, records, user, message_handler):
     data = []
     for record in records:
         record = GoogleHoldRecord(record)
-        record.caltech_holdit_user = user
+        setattr(record, 'caltech_holdit_user', user)
         data.append(google_row_for_record(record))
     if not data:
         return
