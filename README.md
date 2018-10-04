@@ -1,7 +1,7 @@
 Holdit!<img width="100px" align="right" src=".graphics/holdit-icon-256px.png">
 ======
 
-_Holdit!_ is a small application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
+_Holdit!_ is an application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
 
 *Authors*:      [Michael Hucka](http://github.com/mhucka)<br>
 *Repository*:   [https://github.com/caltechlibrary/holdit](https://github.com/caltechlibrary/holdit)<br>
