@@ -41,9 +41,13 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 6. Creates a Word document listing the latest hold requests (if any)
 7. Opens the Word document so that the user can print it
 
-"New holds" are determined in the following way: _Holdit!_ searches the circulation list in caltech.tind.io for items with status code 24, compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records that are in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus a search for status code 24 will no longer retrieve it.
+"New holds" are determined in the following way: _Holdit!_ searches the circulation list in caltech.tind.io for items with status code 24 (which is the item status "on shelf"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records that are in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus a search for status code 24 will no longer retrieve it.
+
+<p align="center"><img width="800px" src=".graphics/tind-holds.png"></p>
 
 Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
+
+<p align="center"><img width="900px" src=".graphics/google-spreadsheet.png"></p>
 
 The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the _Holdit!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Holdit` or wherever the user installed the application.)
 
@@ -72,17 +76,17 @@ Users can modify the look and content of the template as they wish in order to c
 | `{{requester_url}}` | The URL of an information page about the patron |
 | `{{caltech_status}}` | The item's status indication in the Google spreadsheet |
 | `{{caltech_staff_initials}}` | Who handled the hold request |
-| `{{current_date}}` | Today's date; i.e., the date when Holdit! generates the hold list |
-| `{{current_time}}` | Now; i.e., the the time when when Holdit! generates the hold list |
+| `{{current_date}}` | Today's date; i.e., the date when _Holdit!_ generates the hold list |
+| `{{current_time}}` | Now; i.e., the the time when when _Holdit!_ generates the hold list |
 
 
 ✎ Configuration
 --------------
 
-For security reasons, the files checked into the repository do not include all the data necessary to run Holdit!  Two things need to be done before Holdit! can be run from a command line or a working binary can be created.
+For security reasons, the files checked into the repository do not include all the data necessary to run _Holdit!_  Two things need to be done before _Holdit!_ can be run from a command line or a working binary can be created.
 
 1. The value of `spreadsheet_id` in the file [holdit/holdit.ini](holdit/holdit.ini) must be set to the correct Google spreadsheet identifier.  (Namely, the identifier of the spreadsheet used by the Caltech Library circulation group to track holds.)
-2. A `credentials.json` file must be placed in the directory where Holdit! is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
+2. A `credentials.json` file must be placed in the directory where _Holdit!_ is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
 
 More general information about building the _Holdit!_ application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki) on GitHub.
 
