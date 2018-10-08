@@ -85,8 +85,7 @@ def datadir_path():
 
 
 def rename_existing(file):
-    '''Renames 'file' to 'file.bak'.  Uses a notifier class to provide info
-    about what it does.'''
+    '''Renames 'file' to 'file.bak'.'''
 
     def rename(f):
         backup = f + '.bak'
