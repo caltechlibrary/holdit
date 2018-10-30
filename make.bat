@@ -1,4 +1,4 @@
-@echo off
+@ECHO off
 REM ===========================================================================
 REM @file    make.bat
 REM @brief   Build a .exe using PyInstaller
@@ -15,6 +15,10 @@ REM ===========================================================================
 ECHO Removing "dist" and "build" subdirectories.
 
 RD /S /Q dist build
+
+ECHO Generating InnoSetup script.
+
+python dev/installers/windows/substitute_version.py
 
 ECHO Starting PyInstaller ...
 
