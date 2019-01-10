@@ -221,7 +221,7 @@ def tind_json(access_handler, notifier, tracer):
     # the table.  I found this gnarly URL by studying the network
     # requests made by the page when it's loaded.
 
-    ajax_url = 'https://caltech.tind.io/admin2/bibcirculation/requests?draw=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=100&search%5Bvalue%5D=&search%5Bregex%5D=false&sort=request_date&sort_dir=asc'
+    ajax_url = 'https://caltech.tind.io/admin2/bibcirculation/requests?draw=1&order%5B0%5D%5Bdir%5D=asc&start=0&length=1000&search%5Bvalue%5D=&search%5Bregex%5D=false&sort=request_date&sort_dir=asc'
     ajax_headers = {"X-Requested-With": "XMLHttpRequest",
                     "User-Agent": _USER_AGENT_STRING}
     try:
@@ -242,6 +242,12 @@ def tind_json(access_handler, notifier, tracer):
         details = 'Could not find a "recordsTotal" field in returned data'
         notifier.fatal('Caltech.tind.io return results that we could not intepret', details)
         raise ServiceFailure(details)
+    records_total = json_data['recordsTotal'][0][0]
+    if records_total != len(json_data['data']):
+        details = 'TIND "recordsTotal" value = {} but we only got {} records'.format(
+            records_total, len(json_data['data']))
+        notifier.fatal('Failed to get complete list of records from TIND', details)
+        raise InternalError(details)
     return json_data
 
 
