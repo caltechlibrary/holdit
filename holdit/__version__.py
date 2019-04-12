@@ -6,7 +6,7 @@
 # @website https://github.com/caltechlibrary/holdit
 # =============================================================================
 
-__version__     = '1.0.2'
+__version__     = '1.1.0'
 __title__       = 'holdit'
 __name__        = 'Holdit!'
 __description__ = '''A program for Caltech Library's Circulation team to easily generate a printable "on hold" item list from the Caltech TIND server.'''
