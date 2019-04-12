@@ -1,7 +1,7 @@
-Holdit!<img width="100px" align="right" src=".graphics/holdit-icon-256px.png">
+Hold It!<img width="100px" align="right" src=".graphics/holdit-icon-256px.png">
 ======
 
-_Holdit!_ is an application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
+_Hold It!_ is an application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.
 
 *Authors*:      [Michael Hucka](http://github.com/mhucka)<br>
 *Repository*:   [https://github.com/caltechlibrary/holdit](https://github.com/caltechlibrary/holdit)<br>
@@ -9,7 +9,7 @@ _Holdit!_ is an application written for the Caltech Library's Circulation team t
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=flat-square)](https://choosealicense.com/licenses/bsd-3-clause)
 [![Python](https://img.shields.io/badge/Python-3.4+-brightgreen.svg?style=flat-square)](http://shields.io)
-[![Latest release](https://img.shields.io/badge/Latest_release-1.0.2-b44e88.svg?style=flat-square)](http://shields.io)
+[![Latest release](https://img.shields.io/badge/Latest_release-1.1.0-b44e88.svg?style=flat-square)](http://shields.io)
 
 Table of Contents
 -----------------
@@ -28,14 +28,14 @@ Table of Contents
 
 The Caltech Library's Circulation Desk handles, among other things, requests by patrons to put books or other materials on hold.  However, the catalog management software does not have a simple way to produce a printable list of items to hold.  The staff who go to the stacks to find materials have to look up the information from the information management system used by Caltech (TIND), write the information on paper, and update a Google spreadsheet used to track requests.
 
-_Holdit!_ is aimed at automating more of this procedure to reduce frustration and possible errors.  It uses Shibboleth to log in to the Caltech Library system, scrapes TIND to get the necessary information, produces a printable document (based on a customizable template), and updates the Google spreadsheet used to track holds.
+_Hold It!_ is aimed at automating more of this procedure to reduce frustration and possible errors.  It uses Shibboleth to log in to the Caltech Library system, scrapes TIND to get the necessary information, produces a printable document (based on a user-customizable template), and updates the Google spreadsheet used to track holds.
 
 ✺ Installation instructions
 ---------------------------
 
-The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program for Windows 7, Windows 10, or macOS 10.12+.  Note also that installation of _Holdit!_ on Windows requires administrator priviledges.
+The developers provide an installer program for Caltech Library users.  Please contact the developers to get a copy of the installer program for Windows 7, Windows 10, or macOS 10.12+.  Note also that installation of _Hold It!_ on Windows requires administrator priviledges.
 
-You can also build _Holdit!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
+You can also build _Hold It!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
 
 
 ▶︎ Basic operation
@@ -43,7 +43,7 @@ You can also build _Holdit!_ from sources.  Information about building the appli
 
 <img align="right" width="50%" src=".graphics/holdit-initial-window.png">
 
-_Holdit!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and _Holdit!_ creates a main window, then immediately begins its work by connecting to Caltech.tind.io and asking the user for login credentials.  The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
+_Hold It!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and _Hold It!_ creates a main window, then immediately begins its work by connecting to Caltech.tind.io and asking the user for login credentials.  The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
 
 1. Searches Caltech.tind.io for the most recent hold requests
 2. Scrapes the HTML page returned by the TIND search
@@ -53,19 +53,19 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 6. Creates a Word document listing the latest hold requests (if any)
 7. Opens the Word document so that the user can print it
 
-"New holds" are determined in the following way: _Holdit!_ searches the circulation list in caltech.tind.io for items with status code 24 (which is the item status "on shelf"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records that are in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus a search for status code 24 will no longer retrieve it.
+"New holds" are determined in the following way: _Hold It!_ searches the circulation holds list in caltech.tind.io for items with status code 24 (which is the item status "on shelf") and status code 7 (which is the item status "lost"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records that are in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus the search will no longer retrieve it.
 
 <p align="center"><img width="800px" src=".graphics/tind-holds.png"></p>
 
-Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
+Unless an error occurs, _Hold It!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Hold It!_ exits after the user answers the dialog.
 
 <p align="center"><img width="900px" src=".graphics/google-spreadsheet.png"></p>
 
-The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the _Holdit!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Holdit` or wherever the user installed the application.)
+The Word document is created from a template Word file named `template.docx`, which _Hold It!_ looks for in the same folder where the _Hold It!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Hold It` or wherever the user installed the application.)
 
 <p align="center"><img width="400px" src=".graphics/holdit-template.png"></p>
 
-Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
+Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Hold It!_ when it generates the printable document.  The following table lists the recognized variables:
 
 | Variable | Meaning |
 |----------|---------|
@@ -88,19 +88,19 @@ Users can modify the look and content of the template as they wish in order to c
 | `{{requester_url}}` | The URL of an information page about the patron |
 | `{{caltech_status}}` | The item's status indication in the Google spreadsheet |
 | `{{caltech_staff_initials}}` | Who handled the hold request |
-| `{{current_date}}` | Today's date; i.e., the date when _Holdit!_ generates the hold list |
-| `{{current_time}}` | Now; i.e., the the time when when _Holdit!_ generates the hold list |
+| `{{current_date}}` | Today's date; i.e., the date when _Hold It!_ generates the hold list |
+| `{{current_time}}` | Now; i.e., the the time when when _Hold It!_ generates the hold list |
 
 
 ✎ Configuration
 --------------
 
-For security reasons, the files checked into the repository do not include all the data necessary to run _Holdit!_  Two things need to be done before _Holdit!_ can be run from a command line or a working binary can be created.
+For security reasons, the files checked into the repository do not include all the data necessary to run _Hold It!_  Two things need to be done before _Hold It!_ can be run from a command line or a working binary can be created.
 
 1. The value of `spreadsheet_id` in the file [holdit/holdit.ini](holdit/holdit.ini) must be set to the correct Google spreadsheet identifier.  (Namely, the identifier of the spreadsheet used by the Caltech Library circulation group to track holds.)
-2. A `credentials.json` file must be placed in the directory where _Holdit!_ is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
+2. A `credentials.json` file must be placed in the directory where _Hold It!_ is installed or executed from. This `credentials.json` file needs to contain the OAuth credentials from Google to access the spreadsheet via the Google API.
 
-More general information about building the _Holdit!_ application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki) on GitHub.
+More general information about building the _Hold It!_ application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki) on GitHub.
 
 
 ⁇ Getting help and support
@@ -118,9 +118,9 @@ If you like this software, don't forget to give this repo a star on GitHub to sh
 ☺︎ Acknowledgments
 -----------------------
 
-The vector artwork used as part of the logo for _Holdit!_ was created by [Yo! Baba](https://thenounproject.com/vectormarket01/) and obtained from the [Noun Project](https://thenounproject.com/search/?q=hold&i=1022878).  It is licensed under the Creative Commons [CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/) license.
+The vector artwork used as part of the logo for _Hold It!_ was created by [Yo! Baba](https://thenounproject.com/vectormarket01/) and obtained from the [Noun Project](https://thenounproject.com/search/?q=hold&i=1022878).  It is licensed under the Creative Commons [CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/) license.
 
-_Holdit!_ makes use of numerous open-source packages, without which it would have been effectively impossible to develop Turf with the resources we had.  We want to acknowledge this debt.  In alphabetical order, the packages are:
+_Hold It!_ makes use of numerous open-source packages, without which it would have been effectively impossible to develop Turf with the resources we had.  We want to acknowledge this debt.  In alphabetical order, the packages are:
 
 * [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) &ndash; an HTML parsing library
 * [colorama](https://github.com/tartley/colorama) &ndash; makes ANSI escape character sequences work under MS Windows terminals

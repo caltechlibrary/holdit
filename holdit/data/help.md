@@ -1,11 +1,11 @@
-<h1 align="center">Help for Holdit!</h1>
+<h1 align="center">Help for Hold It!</h1>
 
 Basic operation
 ---------------
 
 <img align="right" width="50%" src=".graphics/holdit-initial-window.png">
 
-_Holdit!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and _Holdit!_ creates a main window, then immediately begins its work by connecting to Caltech.tind.io and asking the user for login credentials.  The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
+_Hold It!_ has both a GUI interface and a command-line interface.  The GUI interface is simple: a user starts the program in a typical way (e.g., by double-clicking the program icon) and _Hold It!_ creates a main window, then immediately begins its work by connecting to Caltech.tind.io and asking the user for login credentials.  The image at right depicts the first dialog. After the user types in a login name and password, and clicks the **OK** button, the program does the following behind the scenes:
 
 1. Searches Caltech.tind.io for the most recent hold requests
 2. Scrapes the HTML page returned by the TIND search
@@ -15,17 +15,17 @@ _Holdit!_ has both a GUI interface and a command-line interface.  The GUI interf
 6. Creates a Word document listing the latest hold requests (if any)
 7. Opens the Word document so that the user can print it
 
-Unless an error occurs, _Holdit!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Holdit!_ exits after the user answers the dialog.
+Unless an error occurs, _Hold It!_ presents only one other dialog: to ask the user whether the Google spreadsheet should be opened in a browser window.  If the user clicks the **Yes** button, it's opened.  Either way, _Hold It!_ exits after the user answers the dialog.
 
 
 How new holds are found
 -----------------------
 
-"New holds" are determined in the following way: Holdit searches the circulation list in caltech.tind.io for items with status code 24 (which is the item status "on shelf"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records found in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus a search for status code 24 will no longer retrieve it.
+"New holds" are determined in the following way: Hold It searches the circulation list in caltech.tind.io for items with status code 24 (which is the item status "on shelf") and status code 7 (which is the item status "lost"), compares their bar codes and request dates against all entries found in the Google spreadsheet, and writes out the records found in caltech.tind.io but not in the spreadsheet.  The assumption is that when a circulation desk staff processes a hold, they will change that item's status in caltech.tind.io, and thus the search will no longer retrieve it.
 
 <p align="center"><img width="800px" src=".graphics/tind-holds.png"></p>
 
-An implication of this approach is that until the item status is changed in TIND, re-running Holdit will produce the same records.  Holdit also does not rely on any column in the tracking spreadsheet to be changed manually: it only adds rows for records it finds in TIND that have never been entered in the spreadsheet (based on the combination of bar code and request date).  Users are free to fill out the "status" and "staff initials" and other columns in the spreadsheet in whatever way they way.  _Holdit!_ does fill out one column in the spreadsheet, the "HOLDIT USER", to indicate who ran the program when it added rows to the spreadsheet.  This also makes it easier for users to fill out the "STAFF INITIAL" column to manually indicate that a hold has been fulfilled.  (However, changing the spreadsheet does not affect the record in caltech.tind.io.)
+An implication of this approach is that until the item status is changed in TIND, re-running Hold It will produce the same records.  Hold It also does not rely on any column in the tracking spreadsheet to be changed manually: it only adds rows for records it finds in TIND that have never been entered in the spreadsheet (based on the combination of bar code and request date).  Users are free to fill out the "status" and "staff initials" and other columns in the spreadsheet in whatever way they way.  _Hold It!_ does fill out one column in the spreadsheet, the "HOLDIT USER", to indicate who ran the program when it added rows to the spreadsheet.  This also makes it easier for users to fill out the "STAFF INITIAL" column to manually indicate that a hold has been fulfilled.  (However, changing the spreadsheet does not affect the record in caltech.tind.io.)
 
 <p align="center"><img width="900px" src=".graphics/google-spreadsheet.png"></p>
 
@@ -33,11 +33,11 @@ An implication of this approach is that until the item status is changed in TIND
 Customizing the Word template
 -----------------------------
 
-The Word document is created from a template Word file named `template.docx`, which _Holdit!_ looks for in the same folder where the _Holdit!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Holdit` or wherever the user installed the application.)
+The Word document is created from a template Word file named `template.docx`, which _Hold It!_ looks for in the same folder where the _Hold It!_ program itself is found.  (E.g., on Windows this might be `C:\Program Files\Hold It` or wherever the user installed the application.)
 
 <p align="center"><img width="400px" src=".graphics/holdit-template.png"></p>
 
-Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Holdit!_ when it generates the printable document.  The following table lists the recognized variables:
+Users can modify the look and content of the template as they wish in order to customize the format of the printed hold sheets.  Variables used in the template are indicated by surrounding special terms with `{{` and `}}`; these then get substituted by _Hold It!_ when it generates the printable document.  The following table lists the recognized variables:
 
 | Variable | Meaning |
 |----------|---------|
@@ -60,6 +60,6 @@ Users can modify the look and content of the template as they wish in order to c
 | `{{requester_url}}` | The URL of an information page about the patron |
 | `{{caltech_status}}` | The item's status indication in the Google spreadsheet |
 | `{{caltech_staff_initials}}` | Who handled the hold request |
-| `{{current_date}}` | Today's date; i.e., the date when Holdit! generates the hold list |
-| `{{current_time}}` | Now; i.e., the the time when when Holdit! generates the hold list |
+| `{{current_date}}` | Today's date; i.e., the date when Hold It! generates the hold list |
+| `{{current_time}}` | Now; i.e., the the time when when Hold It! generates the hold list |
 
