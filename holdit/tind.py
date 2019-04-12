@@ -34,9 +34,10 @@ Using a user-agent string that identifies a browser seems to be important
 in order to make Shibboleth or TIND return results.
 '''
 
-_SHIBBED_HOLD_URL = 'https://caltech.tind.io/youraccount/shibboleth?referer=/admin2/bibcirculation/requests%3F%23item_statuses%3D24%26sort%3Drequest_date%26sort_dir%3Dasc'
+_SHIBBED_HOLD_URL = 'https://caltech.tind.io/youraccount/shibboleth?referer=/admin2/bibcirculation/requests%3F%23item_statuses%3D7%2C24%26sort%3Drequest_date%26sort_dir%3Dasc'
 '''
-The hold list URL, via the Caltech Shibboleth login.
+The holds list URL, via the Caltech Shibboleth login.  This lists items with
+status codes 24 and also 7, which mean "on shelf" and "lost", respectively.
 '''
 
 
@@ -133,8 +134,8 @@ def records_from_tind(access_handler, notifier, tracer):
     for json_record in json_data['data']:
         tr = TindRecord(json_record)
         # Special hack: the way the holds are being done with Tind, we only
-        # need to retrieve the new holds that are marked "on shelf".
-        if 'on shelf' in tr.item_loan_status:
+        # need to retrieve the new holds that are marked "on shelf" or "lost".
+        if 'on shelf' in tr.item_loan_status or 'lost' in tr.item_loan_status:
             records.append(tr)
     if __debug__: log('Returning {} "on shelf" records', len(records))
     return records
