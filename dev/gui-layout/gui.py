@@ -19,7 +19,7 @@ class MainFrame(wx.Frame):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         self.SetSize((355, 175))
-        self.title = wx.StaticText(self, wx.ID_ANY, "Holdit: generate a list of hold requests", style=wx.ALIGN_CENTER)
+        self.title = wx.StaticText(self, wx.ID_ANY, "Hold It: generate a list of hold requests", style=wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(self, wx.ID_ANY)
         self.login_label = wx.StaticText(self, wx.ID_ANY, "Caltech TIND login:", style=wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(self, wx.ID_ANY, "", style=wx.TE_DONTWRAP)
@@ -38,7 +38,7 @@ class MainFrame(wx.Frame):
 
     def __set_properties(self):
         # begin wxGlade: MainFrame.__set_properties
-        self.SetTitle("Holdit")
+        self.SetTitle("Hold It")
         self.title.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD, 0, "Arial"))
         self.top_line.SetMinSize((360, 2))
         self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
@@ -88,15 +88,15 @@ class MainFrame(wx.Frame):
 
 # end of class MainFrame
 
-class HolditApp(wx.App):
+class HoldItApp(wx.App):
     def OnInit(self):
         self.setsizeframe = MainFrame(None, wx.ID_ANY, "")
         self.SetTopWindow(self.setsizeframe)
         self.setsizeframe.Show()
         return True
 
-# end of class HolditApp
+# end of class HoldItApp
 
 if __name__ == "__main__":
-    Holdit = HolditApp(0)
-    Holdit.MainLoop()
+    HoldIt = HoldItApp(0)
+    HoldIt.MainLoop()

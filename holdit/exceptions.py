@@ -1,5 +1,5 @@
 '''
-exceptions.py: exceptions defined by Holdit
+exceptions.py: exceptions defined by Hold It
 
 Authors
 -------
@@ -23,5 +23,5 @@ class ServiceFailure(Exception):
     pass
 
 class InternalError(Exception):
-    '''Unrecoverable problem involving Holdit itself.'''
+    '''Unrecoverable problem involving Hold It itself.'''
     pass

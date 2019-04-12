@@ -86,7 +86,7 @@ def printable_doc(records_list, explicit_template):
 
 def normal_template():
     '''Finds the path to a template .docx file.  It first looks in the
-    directory where Holdit is installed for a filed named "template.docx".
+    directory where Hold It is installed for a filed named "template.docx".
     If no such file is found, it resorts to using a default template file.
     '''
     template = path.join(holdit_path(), 'template.docx')

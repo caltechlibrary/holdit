@@ -1,17 +1,17 @@
-'''control.py: human interface controller for Holdit!
+'''control.py: human interface controller for Hold It!
 
 After trying alternatives and failing to get things to work, I settled on the
 following approach that works on both Mac and Windows 10 in my testing.
 
-The constrol structure of Holdit! is somewhat inverted from what a typical
+The constrol structure of Hold It! is somewhat inverted from what a typical
 WxPython application would look like.  The typical application would be
 purely event-driven: it would be implemented as an object derived from
 wx.Frame with methods for different kinds of actions that the user can
 trigger by interacting with controls in the GUI.  Once the WxPython
 app.MainLoop() function is called, nothing happens until the user does
-something to trigger an activitiy.  Conversely, in Holdit's case, I not only
+something to trigger an activitiy.  Conversely, in Hold It's case, I not only
 wanted to allow command-line based interaction, but also wanted the entire
-process to be started as soon as the user starts the Holdit application.
+process to be started as soon as the user starts the Hold It application.
 This is incompatible with the typical event-driven application structure
 because there's an explicit sequential driver and it needs to be kicked off
 automatically after app.MainLoop() is called.
@@ -20,8 +20,8 @@ The approach taken here has two main features.
 
 * First, there are two threads running: one for the WxPython GUI MainLoop()
   code and all GUI objects (like MainFrame and LoginDialog in this file), and
-  another thread for the real main body that implements Holdit's sequence of
-  operations.  The main thread is kicked off by HolditControlGUI's start()
+  another thread for the real main body that implements Hold It's sequence of
+  operations.  The main thread is kicked off by HoldItControlGUI's start()
   method right before calling app.MainLoop().
 
 * Second, the main body thread invokes GUI operations using a combination of
@@ -77,7 +77,7 @@ from holdit.debug import log
 # Exported classes.
 # .............................................................................
 
-class HolditControlBase():
+class HoldItControlBase():
     '''User interface controller base class.'''
 
     @property
@@ -86,8 +86,8 @@ class HolditControlBase():
         return None
 
 
-class HolditControlCLI(HolditControlBase):
-    '''User interface controller for Holdit! in command-line interface mode.'''
+class HoldItControlCLI(HoldItControlBase):
+    '''User interface controller for Hold It! in command-line interface mode.'''
 
     def __init__(self):
         super().__init__()
@@ -109,13 +109,13 @@ class HolditControlCLI(HolditControlBase):
         sys.exit()
 
 
-class HolditControlGUI(HolditControlBase):
-    '''User interface controller for Holdit! in GUI mode.'''
+class HoldItControlGUI(HoldItControlBase):
+    '''User interface controller for Hold It! in GUI mode.'''
 
     def __init__(self):
         super().__init__()
         self._app = wx.App()
-        self._frame = HolditMainFrame(None, wx.ID_ANY, "")
+        self._frame = HoldItMainFrame(None, wx.ID_ANY, "")
         self._app.SetTopWindow(self._frame)
         self._frame.Center()
         self._frame.Show(True)
@@ -141,7 +141,7 @@ class HolditControlGUI(HolditControlBase):
 # Internal implementation classes.
 # .............................................................................
 
-class HolditMainFrame(wx.Frame):
+class HoldItMainFrame(wx.Frame):
     '''Defines the main application GUI frame.'''
 
     def __init__(self, *args, **kwds):
@@ -233,14 +233,14 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_cancel_or_quit(self, event):
-        if __debug__: log('HolditControlGUI got Exit/Cancel')
+        if __debug__: log('HoldItControlGUI got Exit/Cancel')
         self._cancel = True
         self.Destroy()
         return True
 
 
     def on_escape(self, event):
-        if __debug__: log('HolditControlGUI got Escape')
+        if __debug__: log('HoldItControlGUI got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
             self.on_cancel_or_quit(event)
@@ -250,7 +250,7 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_about(self, event):
-        if __debug__: log('HolditControlGUI opening About window')
+        if __debug__: log('HoldItControlGUI opening About window')
         dlg = wx.adv.AboutDialogInfo()
         dlg.SetName(holdit.__name__)
         dlg.SetVersion(holdit.__version__)
@@ -263,7 +263,7 @@ class HolditMainFrame(wx.Frame):
 
 
     def on_help(self, event):
-        if __debug__: log('HolditControlGUI opening Help window')
+        if __debug__: log('HoldItControlGUI opening Help window')
         wx.BeginBusyCursor()
         help_file = path.join(datadir_path(), "help.html")
         if readable(help_file):
@@ -277,7 +277,7 @@ class HolditMainFrame(wx.Frame):
 
 
     def login_dialog(self, results, user, password):
-        if __debug__: log('HolditControlGUI creating and showing login dialog')
+        if __debug__: log('HoldItControlGUI creating and showing login dialog')
         dialog = LoginDialog(self)
         dialog.initialize_values(results, user, password)
         dialog.ShowWindowModal()
@@ -299,7 +299,7 @@ class LoginDialog(wx.Dialog):
         else:
             self.SetSize((330, 155))
         self.explanation = wx.StaticText(panel, wx.ID_ANY,
-                                         'Holdit! needs your Caltech Access credentials',
+                                         'Hold It! needs your Caltech Access credentials',
                                          style = wx.ALIGN_CENTER)
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech login: ", style = wx.ALIGN_RIGHT)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # =============================================================================
 # @file    setup.py
-# @brief   Holdit setup file
+# @brief   Hold It! setup file
 # @author  Michael Hucka <mhucka@caltech.edu>
 # @license Please see the file named LICENSE in the project directory
 # @website https://github.com/caltechlibrary/holdit

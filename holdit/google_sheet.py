@@ -172,7 +172,7 @@ def spreadsheet_credentials(user, message_handler):
         secrets_file = path.join(datadir_path(), _SECRETS_FILE)
         flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
         # On Windows, run_flow calls argparse and ends up getting the args
-        # we pass to our Holdit __main__.py.  I have no idea how that's
+        # we pass to our Hold It __main__.py.  I have no idea how that's
         # happening, but hacked around it this way:
         sys.argv = sys.argv[:1]
         creds = tools.run_flow(flow, store)

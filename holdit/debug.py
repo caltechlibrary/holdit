@@ -1,5 +1,5 @@
 '''
-debug.py: debugging aids for Holdit!
+debug.py: debugging aids for Hold It!
 
 Authors
 -------

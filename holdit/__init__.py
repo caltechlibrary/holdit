@@ -1,5 +1,5 @@
 '''
-Holdit! generates a printable Word document containing recent hold requests and
+Hold It! generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
 The Caltech Library's Circulation Desk handles, among other things, requests
@@ -9,7 +9,7 @@ items to hold.  The staff who go to the stacks to find materials have to look
 up the information from the LIMS system used by Caltech (TIND), write the
 information on paper, and update a Google spreadsheet used to track requests.
 
-Holdit! is aimed at automating more of this procedure to reduce frustration
+Hold It! is aimed at automating more of this procedure to reduce frustration
 and possible errors.  It uses Shibboleth to log in to the Caltech Library
 system, scrapes TIND to get the necessary information, produces a printable
 document (based on a customizable template), and updates the Google
@@ -30,20 +30,20 @@ does the following behind the scenes:
 6. Creates a Word document listing the latest hold requests (if any)
 7. Opens the Word document so that the user can print it
 
-Holdit! presents only one other dialog: to ask the user whether the Google
+Hold It! presents only one other dialog: to ask the user whether the Google
 spreadsheet should be opened in a browser window.  If the user clicks the Yes
-button, it's opened.  Either way, Holdit! exits after the user answers the
+button, it's opened.  Either way, Hold It! exits after the user answers the
 dialog.
 
-The Word document created by Holdit! is based on a template Word file
-unimaginatively named 'template.docx', which Holdit! looks for in the same
+The Word document created by Hold It! is based on a template Word file
+unimaginatively named 'template.docx', which Hold It! looks for in the same
 folder where the program is found.  Users can modify the look and content of
 the template as they wish in order to customize the format of the printed
 hold sheets.  Variables used in the template are indicated by surrounding
-special terms with '{{' and '}}'; these then get substituted by Holdit!
+special terms with '{{' and '}}'; these then get substituted by Hold It!
 when it generates the printable document.
 
-Holdit! will write the output to a file named "holds_print_list.docx" in the
+Hold It! will write the output to a file named "holds_print_list.docx" in the
 user's Desktop directory, unless the -o option (/o on Windows) is given with
 an explicit file path to use instead.
 

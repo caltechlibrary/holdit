@@ -1,14 +1,14 @@
 '''
-__main__: main command-line interface to Holdit!
+__main__: main command-line interface to Hold It!
 
-Holdit! generates a printable Word document containing recent hold requests and
+Hold It! generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
-By default, Holdit! uses a GUI dialog to get the user's Caltech access login
+By default, Hold It! uses a GUI dialog to get the user's Caltech access login
 name and password.  If the -G option is given (/G on Windows), it will not
 use a GUI dialog, and will instead use the operating system's
 keyring/keychain functionality to get a user name and password.  If the
-information does not exist from a previous run of Holdit!, it will query the
+information does not exist from a previous run of Hold It!, it will query the
 user interactively for the user name and password, and (unless the -K or /K
 argument is given) store them in the user's keyring/keychain so that it does
 not have to ask again in the future.  It is also possible to supply the
@@ -19,22 +19,22 @@ multiuser computer systems.
 To reset the user name and password (e.g., if a mistake was made the last
 time and the wrong credentials were stored in the keyring/keychain system),
 use the -R (or /R on Windows) command-line argument to a command.  This
-argument will make Holdit! query for the user name and password again even if
+argument will make Hold It! query for the user name and password again even if
 an entry already exists in the keyring or keychain.
 
-By default, Holdit! looks for a .docx file named "template.docx" in the
-directory where Holdit! is located, and uses that as the template for record
+By default, Hold It! looks for a .docx file named "template.docx" in the
+directory where Hold It! is located, and uses that as the template for record
 printing.  If given the -t option followed by a file name (/t on Windows), it
 will look for the named file instead.  If it is not given an explicit
-template file and it cannot find a file "template.docx", Holdit! will use a
+template file and it cannot find a file "template.docx", Hold It! will use a
 built-in default template file.
 
-By default, Holdit! will also open the Google spreadsheet used by the
+By default, Hold It! will also open the Google spreadsheet used by the
 Circulation staff to track hold requests.  This action is inhibited if given
 the -S option (/S on Windows).  The Google spreadsheet is always updated in
 any case.
 
-Holdit! will write the output to a file named "holds_print_list.docx" in the
+Hold It! will write the output to a file named "holds_print_list.docx" in the
 user's Desktop directory, unless the -o option (/o on Windows) is given with
 an explicit file path to use instead.
 
@@ -64,7 +64,7 @@ from   threading import Thread
 import traceback
 
 import holdit
-from holdit.control import HolditControlGUI, HolditControlCLI
+from holdit.control import HoldItControlGUI, HoldItControlCLI
 from holdit.access import AccessHandlerGUI, AccessHandlerCLI
 from holdit.progress import ProgressIndicatorGUI, ProgressIndicatorCLI
 from holdit.messages import MessageHandlerGUI, MessageHandlerCLI
@@ -103,11 +103,11 @@ def main(user = 'U', pswd = 'P', output='O', template='F',
     '''Generates a printable Word document containing recent hold requests and
 also update the relevant Google spreadsheet used for tracking requests.
 
-By default, Holdit! uses a GUI dialog to get the user's Caltech access login
+By default, Hold It! uses a GUI dialog to get the user's Caltech access login
 name and password.  If the -G option is given (/G on Windows), it will not
 use a GUI dialog, and will instead use the operating system's
 keyring/keychain functionality to get a user name and password.  If the
-information does not exist from a previous run of Holdit!, it will query the
+information does not exist from a previous run of Hold It!, it will query the
 user interactively for the user name and password, and (unless the -K or /K
 argument is given) store them in the user's keyring/keychain so that it does
 not have to ask again in the future.  It is also possible to supply the
@@ -118,22 +118,22 @@ multiuser computer systems.
 To reset the user name and password (e.g., if a mistake was made the last
 time and the wrong credentials were stored in the keyring/keychain system),
 use the -R (or /R on Windows) command-line argument to a command.  This
-argument will make Holdit! query for the user name and password again even if
+argument will make Hold It! query for the user name and password again even if
 an entry already exists in the keyring or keychain.
 
-By default, Holdit! looks for a .docx file named "template.docx" in the
-directory where Holdit! is located, and uses that as the template for record
+By default, Hold It! looks for a .docx file named "template.docx" in the
+directory where Hold It! is located, and uses that as the template for record
 printing.  If given the -t option followed by a file name (/t on Windows), it
 will look for the named file instead.  If it is not given an explicit
-template file and it cannot find a file "template.docx", Holdit! will use a
+template file and it cannot find a file "template.docx", Hold It! will use a
 built-in default template file.
 
-By default, Holdit! will also open the Google spreadsheet used by the
+By default, Hold It! will also open the Google spreadsheet used by the
 Circulation staff to track hold requests.  This action is inhibited if given
 the -S option (/S on Windows).  The Google spreadsheet is always updated in
 any case.
 
-Holdit! will write the output to a file named "holds_print_list.docx" in the
+Hold It! will write the output to a file named "holds_print_list.docx" in the
 user's Desktop directory, unless the -o option (/o on Windows) is given with
 an explicit file path to use instead.
 
@@ -174,12 +174,12 @@ information and exit without doing anything else.
 
     # Switch between different ways of getting information from/to the user.
     if use_gui:
-        controller = HolditControlGUI()
+        controller = HoldItControlGUI()
         accesser   = AccessHandlerGUI(user, pswd)
         notifier   = MessageHandlerGUI()
         tracer     = ProgressIndicatorGUI()
     else:
-        controller = HolditControlCLI()
+        controller = HoldItControlCLI()
         accesser   = AccessHandlerCLI(user, pswd, use_keyring, reset)
         notifier   = MessageHandlerCLI(use_color)
         tracer     = ProgressIndicatorCLI(use_color)
@@ -191,7 +191,7 @@ information and exit without doing anything else.
 
 
 class MainBody(Thread):
-    '''Main body of Holdit! implemented as a Python thread.'''
+    '''Main body of Hold It! implemented as a Python thread.'''
 
     def __init__(self, template, output, view_sheet, debug,
                  controller, tracer, accesser, notifier):
@@ -207,7 +207,7 @@ class MainBody(Thread):
         self._notifier   = notifier
         if controller.is_gui:
             # Only make this a daemon thread when using the GUI; for CLI, it
-            # must not be a daemon thread or else Holdit! exits immediately.
+            # must not be a daemon thread or else Hold It! exits immediately.
             self.daemon = True
 
 
@@ -232,7 +232,7 @@ class MainBody(Thread):
         try:
             config = Config(path.join(module_path(), "holdit.ini"))
 
-            # The default template is expected to be inside the Holdit module.
+            # The default template is expected to be inside the Hold It module.
             # If the user supplies a template, we use it instead.
             tracer.update('Getting output template')
             template_file = config.get('holdit', 'template')
@@ -245,13 +245,13 @@ class MainBody(Thread):
                 else:
                     notifier.warn('File "{}" not readable -- using default.'.format(template))
             else:
-                # Check for "template.docx" in the Holdit installation dir.
+                # Check for "template.docx" in the Hold It installation dir.
                 temp = path.abspath(path.join(holdit_path(), "template.docx"))
                 if readable(temp):
                     if __debug__: log('Using template found at "{}"'.format(temp))
                     template_file = temp
 
-            # Sanity check against possible screwups in creating the Holdit! app.
+            # Sanity check against possible screwups in creating the Hold It! app.
             # Do them here so that we can fail early if we know we can't finish.
             if not readable(template_file):
                 notifier.fatal('Template doc file "{}" not readable.'.format(template_file))

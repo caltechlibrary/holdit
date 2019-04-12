@@ -45,8 +45,8 @@ The name of the keyring used to store Caltech access credentials, if any.
 # .............................................................................
 # The basic principle of writing the classes (like this one) that get used in
 # MainBody is that they should take the information they need, rather than
-# putting the info into the controller object (i.e., HolditControlGUI or
-# HolditControlCLI).  This is a matter of separation of concerns and
+# putting the info into the controller object (i.e., HoldItControlGUI or
+# HoldItControlCLI).  This is a matter of separation of concerns and
 # information hiding.
 
 class AccessHandlerBase():

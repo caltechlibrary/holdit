@@ -1,5 +1,5 @@
 '''
-messages: message-printing utilities for Holdit!
+messages: message-printing utilities for Hold It!
 
 Authors
 -------
@@ -35,15 +35,15 @@ from holdit.exceptions import *
 # .............................................................................
 # The basic principle of writing the classes (like this one) that get used in
 # MainBody is that they should take the information they need, rather than
-# putting the info into the controller object (i.e., HolditControlGUI or
-# HolditControlCLI).  This means, for example, that 'use_color' is handed to
-# the CLI version of this object, not to the base class or the HolditControl*
+# putting the info into the controller object (i.e., HoldItControlGUI or
+# HoldItControlCLI).  This means, for example, that 'use_color' is handed to
+# the CLI version of this object, not to the base class or the HoldItControl*
 # classes, even though use_color is something that may be relevant to more
 # than one of the main classes.  This is a matter of separation of concerns
 # and information hiding.
 
 class MessageHandlerBase():
-    '''Base class for message-printing classes in Holdit!'''
+    '''Base class for message-printing classes in Hold It!'''
 
     def __init__(self):
         pass
@@ -132,7 +132,7 @@ class MessageHandlerGUI(MessageHandlerBase):
         '''Displays a simple notice with a single OK button.'''
         frame = wx.Frame(wx.GetApp().TopWindow)
         frame.Center()
-        dlg = wx.GenericMessageDialog(frame, text, caption = "Holdit!",
+        dlg = wx.GenericMessageDialog(frame, text, caption = "Hold It!",
                                       style = wx.OK | wx.ICON_INFORMATION)
         clicked = dlg.ShowModal()
         dlg.Destroy()
@@ -150,10 +150,10 @@ class MessageHandlerGUI(MessageHandlerBase):
             short = text + '\n\nWould you like to try to continue?\n(Click "no" to quit now.)'
             style = wx.YES_NO | wx.YES_DEFAULT | wx.HELP | wx.ICON_EXCLAMATION
         dlg = wx.MessageDialog(frame, message = short, style = style,
-                               caption = "Holdit has encountered a problem")
+                               caption = "Hold It has encountered a problem")
         clicked = dlg.ShowModal()
         if clicked == wx.ID_HELP:
-            body = ("Holdit has encountered a problem:\n"
+            body = ("Hold It has encountered a problem:\n"
                     + "─"*30
                     + "\n{}\n".format(details or text)
                     + "─"*30
@@ -180,7 +180,7 @@ class MessageHandlerGUI(MessageHandlerBase):
     def _yes_no(self, question):
         frame = wx.Frame(wx.GetApp().TopWindow)
         frame.Center()
-        dlg = wx.GenericMessageDialog(frame, question, caption = "Holdit!",
+        dlg = wx.GenericMessageDialog(frame, question, caption = "Hold It!",
                                       style = wx.YES_NO | wx.ICON_QUESTION)
         clicked = dlg.ShowModal()
         dlg.Destroy()

@@ -1,6 +1,6 @@
 # =============================================================================
 # @file    Makefile
-# @brief   Makefile for some steps in creating a Holdit! application
+# @brief   Linux & OSX makefile to help create a Hold It! application
 # @author  Michael Hucka
 # @date    2018-09-13
 # @license Please see the file named LICENSE in the project directory
@@ -24,21 +24,27 @@ help-file  := holdit/data/help.html
 build: | dependencies build-$(platform)
 
 # Platform-specific instructions.
+#
+# Note: I wanted to name the application file with a space ("Hold It"), but
+# it turns out to be ridiculously complicated to get GNU make to handle
+# spaces in file names used in shell commands.  (I.e., it's okay to have a
+# target with an escaped space in this Makefile, but you have to do batshit
+# insane hacks to refer to file names when you write the actions.  See for
+# example https://stackoverflow.com/q/35617602/743730) So I gave up and
+# called the executable HoldIt.
 
-build-darwin: dist/Holdit.app $(about-file) $(help-file) # NEWS.html
-#	packagesbuild dev/installer-builders/macos/packages-config/Holdit.pkgproj
-#	mv dist/Holdit-mac.pkg dist/Holdit-$(release)-macos-$(macos_vers).pkg 
+build-darwin: dist/HoldIt.app $(about-file) $(help-file) # NEWS.html
 
-build-linux: dist/holdit
-	(cd dist; tar czf Holdit-$(release)-$(distro)-$(linux_vers).tar.gz holdit)
+build-linux: dist/HoldIt
+	(cd dist; tar czf HoldIt-$(release)-$(distro)-$(linux_vers).tar.gz holdit)
 
-dist/Holdit.app:
+dist/HoldIt.app: $(help-file) $(about-file)
 	pyinstaller --clean pyinstaller-$(platform).spec
-	sed -i '' -e 's/0.0.0/$(release)/' dist/Holdit.app/Contents/Info.plist
-	rm -f dist/Holdit.app/Contents/Info.plist.bak
+	sed -i '' -e 's/0.0.0/$(release)/' 'dist/HoldIt.app/Contents/Info.plist'
+	rm -f 'dist/HoldIt.app/Contents/Info.plist.bak'
 	rm -f dist/holdit
 
-dist/holdit dist/Holdit.exe:
+dist/holdit dist/HoldIt.exe:
 	pyinstaller --clean pyinstaller-$(platform).spec
 
 dependencies:;
@@ -66,7 +72,7 @@ NEWS.html: NEWS.md
 clean: clean-dist clean-html
 
 clean-dist:;
-	-rm -fr dist/Holdit.app dist/holdit dist/holdit.exe build
+	-rm -fr dist/HoldIt.app dist/holdit dist/holdit.exe build
 
 clean-html:;
 	-rm -fr ABOUT.html NEWS.html

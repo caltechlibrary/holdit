@@ -39,9 +39,9 @@ from holdit.debug import log
 # .............................................................................
 # The basic principle of writing the classes (like this one) that get used in
 # MainBody is that they should take the information they need, rather than
-# putting the info into the controller object (i.e., HolditControlGUI or
-# HolditControlCLI).  This means, for example, that 'use_color' is handed to
-# the CLI version of this object, not to the base class or the HolditControl*
+# putting the info into the controller object (i.e., HoldItControlGUI or
+# HoldItControlCLI).  This means, for example, that 'use_color' is handed to
+# the CLI version of this object, not to the base class or the HoldItControl*
 # classes, even though use_color is something that may be relevant to more
 # than one of the main classes.  This is a matter of separation of concerns
 # and information hiding.

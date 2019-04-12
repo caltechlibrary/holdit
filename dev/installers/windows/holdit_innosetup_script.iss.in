@@ -1,12 +1,12 @@
 ; =============================================================================
 ; @file    holdit_innosetup_script.iss
-; @brief   Inno Setup script for Holdit!
+; @brief   Inno Setup script for Hold It!
 ; @author  Michael Hucka <mhucka@caltech.edu>
 ; @license Please see the file named LICENSE in the project directory
 ; @website https://github.com/caltechlibrary/holdit
 ; =============================================================================
 
-#define MyAppName "Holdit"
+#define MyAppName "Hold It!"
 #define MyAppVersion "@@VERSION@@"
 #define MyAppPublisher "Caltech DLD"
 #define MyAppURL "https://github.com/caltechlibrary/holdit"
@@ -30,7 +30,7 @@ DefaultDirName={pf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=Z:\project-files\library\repos\holdit\dist
-OutputBaseFilename=Holdit_win10_x64_@@VERSION@@
+OutputBaseFilename=HoldIt_win10_x64_@@VERSION@@
 SetupIconFile=Z:\project-files\library\repos\holdit\dev\icons\generated-icons\holdit-icon-256px.ico
 Compression=lzma
 SolidCompression=yes
@@ -50,7 +50,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ;
-Source: "\\Mac\Home\project-files\library\repos\holdit\dist\Holdit.exe"; DestDir: "{app}"; Flags:
+Source: "\\Mac\Home\project-files\library\repos\holdit\dist\HoldIt.exe"; DestDir: "{app}"; Flags:
 Source: "\\Mac\Home\project-files\library\repos\holdit\ABOUT.html"; DestDir: "{app}"; Flags: isreadme
 Source: "\\Mac\Home\project-files\library\repos\holdit\holdit\data\default_template.docx"; DestDir: "{app}"; DestName: "template.docx"; Flags: ignoreversion
 
