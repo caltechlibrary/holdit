@@ -17,8 +17,10 @@ file "LICENSE" for more information.
 from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import client, tools
+from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.contrib.keyring_storage import Storage as token_storage
 from os import path
+import json as jsonlib
 import sys
 
 # oauth2client library loads keyring but does not set a backend, which
@@ -166,17 +168,14 @@ def spreadsheet_credentials(user, message_handler):
     store = token_storage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
-
-
         if __debug__: log('Using secrets file for Google API')
         secrets_file = path.join(datadir_path(), _SECRETS_FILE)
-        flow = client.flow_from_clientsecrets(secrets_file, _OAUTH_SCOPE)
+        flow = google_flow(secrets_file, _OAUTH_SCOPE)
         # On Windows, run_flow calls argparse and ends up getting the args
         # we pass to our Hold It __main__.py.  I have no idea how that's
         # happening, but hacked around it this way:
         sys.argv = sys.argv[:1]
         creds = tools.run_flow(flow, store)
-
 
     if not creds:
         message_handler.error('Failed to get Google API token')
@@ -253,6 +252,23 @@ def google_row_for_record(record):
     i = record.caltech_status
     j = record.caltech_staff_initials
     return [a, b, c, d, e, f, g, h, i, j]
+
+
+def google_flow(secrets_file, scope):
+    # Code based on https://stackoverflow.com/a/28890297/743730
+    with open(secrets_file, 'r') as fp:
+        obj = jsonlib.load(fp)
+
+    secrets = obj['installed']
+
+    # Return a Flow that requests a refresh_token
+    return OAuth2WebServerFlow(
+        client_id = secrets['client_id'],
+        client_secret = secrets['client_secret'],
+        redirect_uri = secrets['redirect_uris'][0],
+        scope = scope,
+        access_type = 'offline',
+        approval_prompt = 'force')
 
 
 def link(value, url):
