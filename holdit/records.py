@@ -60,16 +60,17 @@ def records_diff(known_records, new_records):
     if __debug__: log('Diffing known records with new records')
     diffs = []
     for candidate in new_records:
-        matched = [record for record in known_records
-                   if record.item_barcode == candidate.item_barcode]
-        if not matched:
+        found = [record for record in known_records if same_request(record, candidate)]
+        if not found:
             diffs.append(candidate)
-        else:
-            for record in matched:
-                if candidate.date_requested != record.date_requested:
-                    diffs.append(candidate)
     if __debug__: log('Found {} different records', len(diffs))
     return diffs
+
+
+def same_request(record1, record2):
+    return (record1.item_barcode == record2.item_barcode
+            and record1.date_requested == record2.date_requested
+            and record1.requester_name == record2.requester_name)
 
 
 def records_filter(method = 'all'):
