@@ -50,7 +50,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ;
-Source: "\\Mac\Home\project-files\library\repos\holdit\dist\HoldIt.exe"; DestDir: "{app}"; Flags:
+Source: "\\Mac\Home\project-files\library\repos\holdit\dist\Hold It.exe"; DestDir: "{app}"; Flags:
 Source: "\\Mac\Home\project-files\library\repos\holdit\ABOUT.html"; DestDir: "{app}"; Flags: isreadme
 Source: "\\Mac\Home\project-files\library\repos\holdit\holdit\data\default_template.docx"; DestDir: "{app}"; DestName: "template.docx"; Flags: ignoreversion
 
