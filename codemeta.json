@@ -1,7 +1,7 @@
 {
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
-  "description": "An application written for the Caltech Library's Circulation team to easily generate a printable "on hold" book list from the Caltech TIND server.",
+  "description": "An application written for the Caltech Library's Circulation team to easily generate a printable 'on hold' book list from the Caltech TIND server.",
   "name": "Hold It!",
   "codeRepository": "https://github.com/caltechlibrary/holdit",
   "issueTracker": "https://github.com/caltechlibrary/holdit/issues",
