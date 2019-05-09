@@ -1,6 +1,13 @@
 Change log for Hold It!
 =======================
 
+Version 1.1.1
+-------------
+
+* Try harder to rename a previous Word document if one exists
+* Try to detect if the Word doc is open in another application
+
+
 Version 1.1.0
 -------------
 
