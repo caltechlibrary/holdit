@@ -16,6 +16,7 @@ file "LICENSE" for more information.
 
 import os
 from   os import path
+import shutil
 import sys
 import subprocess
 import webbrowser
@@ -92,8 +93,14 @@ def rename_existing(file):
         # If we fail, we just give up instead of throwing an exception.
         try:
             os.rename(f, backup)
+            if __debug__: log('renamed {} to {}', file, backup)
         except:
-            return
+            try:
+                delete_existing(backup)
+                os.rename(f, backup)
+            except:
+                if __debug__: log('failed to delete {}', backup)
+                if __debug__: log('failed to rename {} to {}', file, backup)
 
     if path.exists(file):
         rename(file)
@@ -104,9 +111,41 @@ def rename_existing(file):
         return
 
 
+def delete_existing(file):
+    '''Delete the given file.'''
+    # Check if it's actually a directory.
+    if path.isdir(file):
+        if __debug__: log('doing rmtree on directory {}', file)
+        try:
+            shutil.rmtree(file)
+        except:
+            if __debug__: log('unable to rmtree {}; will try renaming', file)
+            try:
+                rename_existing(file)
+            except:
+                if __debug__: log('unable to rmtree or rename {}', file)
+    else:
+        if __debug__: log('deleting file {}', file)
+        os.remove(file)
+
+
+def file_in_use(file):
+    if not path.exists(file):
+        return False
+    if sys.platform.startswith('win'):
+        # This is a hack, and it really only works for this purpose on Windows.
+        try:
+            os.rename(file, file)
+            return False
+        except:
+            return True
+    return False
+
+
 def open_file(file):
     '''Open document with default application in Python.'''
     # Code originally from https://stackoverflow.com/a/435669/743730
+    if __debug__: log('opening file {}', file)
     if sys.platform.startswith('darwin'):
         subprocess.call(('open', file))
     elif os.name == 'nt':
@@ -118,4 +157,5 @@ def open_file(file):
 def open_url(url):
     '''Open the given 'url' in a web browser using the current platform's
     default approach.'''
+    if __debug__: log('opening url {}', url)
     webbrowser.open(url)
