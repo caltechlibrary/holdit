@@ -74,8 +74,8 @@ from holdit.tind import records_from_tind
 from holdit.google_sheet import records_from_google, update_google, open_google
 from holdit.generate import printable_doc
 from holdit.network import network_available
-from holdit.files import readable, writable, open_file, rename_existing
-from holdit.files import desktop_path, module_path, holdit_path
+from holdit.files import readable, writable, open_file, rename_existing, file_in_use
+from holdit.files import desktop_path, module_path, holdit_path, delete_existing
 from holdit.exceptions import *
 from holdit.debug import set_debug, log
 
@@ -280,10 +280,14 @@ class MainBody(Thread):
                     output = path.join(desktop_path(), "holds_print_list.docx")
                 if path.exists(output):
                     rename_existing(output)
-                result = printable_doc(new_records, template_file)
-                result.save(output)
-                tracer.update('Opening Word document for printing')
-                open_file(output)
+                if file_in_use(output):
+                    details = '{} appears to be open in another program'.format(output)
+                    notifier.warn('Cannot write Word doc -- is it still open?', details)
+                else:
+                    result = printable_doc(new_records, template_file)
+                    result.save(output)
+                    tracer.update('Opening Word document for printing')
+                    open_file(output)
             else:
                 tracer.update('No new hold requests were found in TIND.')
             # Open the spreadsheet too, if requested.
