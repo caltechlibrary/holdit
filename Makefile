@@ -72,7 +72,7 @@ NEWS.html: NEWS.md
 clean: clean-dist clean-html
 
 clean-dist:;
-	-rm -fr dist/HoldIt.app dist/holdit dist/holdit.exe build
+	-rm -fr dist build
 
 clean-html:;
 	-rm -fr ABOUT.html NEWS.html
