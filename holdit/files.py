@@ -125,7 +125,7 @@ def delete_existing(file):
             except:
                 if __debug__: log('unable to rmtree or rename {}', file)
     else:
-        if __debug__: log('deleting file {}', file)
+        if __debug__: log('doing os.remove on file {}', file)
         os.remove(file)
 
 
