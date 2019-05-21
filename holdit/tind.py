@@ -40,6 +40,11 @@ The holds list URL, via the Caltech Shibboleth login.  This lists items with
 status codes 24 and also 7, which mean "on shelf" and "lost", respectively.
 '''
 
+_SSO_URL = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO'
+'''
+Root URL for the Caltech SAML steps.
+'''
+
 
 # Class definitions.
 # .............................................................................
@@ -171,10 +176,10 @@ def tind_json(access_handler, notifier, tracer):
         if not user or not pswd:
             if __debug__: log('empty values returned from login dialog')
             return None
-        tree = html.fromstring(res.content)
         sessionid = session.cookies.get('JSESSIONID')
-        next_url = 'https://idp.caltech.edu/idp/profile/SAML2/Redirect/SSO;jsessionid={}?execution=e1s1'.format(sessionid)
         login_data = sso_login_data(user, pswd)
+        # SAML step 1.
+        next_url = '{};jsessionid={}?execution=e1s1'.format(_SSO_URL, sessionid)
         try:
             if __debug__: log('Issuing network post to idp.caltech.edu')
             res = session.post(next_url, data = login_data, allow_redirects = True)
@@ -183,6 +188,17 @@ def tind_json(access_handler, notifier, tracer):
             details = 'exception connecting to idp.caltech.edu: {}'.format(err)
             notifier.fatal('Failed to connect to tind.io', details)
             raise ServiceFailure(details)
+        # SAML step 2.
+        next_url = '{};jsessionid={}?execution=e1s2'.format(_SSO_URL, sessionid)
+        try:
+            if __debug__: log('Issuing network post to idp.caltech.edu')
+            res = session.post(next_url, data = login_data, allow_redirects = True)
+            if __debug__: log('Succeeded in network post to idp.caltech.edu')
+        except Exception as err:
+            details = 'exception connecting to idp.caltech.edu: {}'.format(err)
+            notifier.fatal('Failed to connect to tind.io', details)
+            raise ServiceFailure(details)
+
         logged_in = bool(str(res.content).find('Forgot your password') <= 0)
         if not logged_in and not notifier.yes_no('Incorrect login. Try again?'):
             if __debug__: log('user cancelled access login')
