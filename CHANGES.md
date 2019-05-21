@@ -1,6 +1,12 @@
 Change log for Hold It!
 =======================
 
+Version 1.1.2
+-------------
+
+* Fix a critical bug in how Shibboleth authentication with Tind.io is handled.  It is a bit of a mystery to me how the previous code could have worked (and worked in production, no less).
+
+
 Version 1.1.1
 -------------
 
