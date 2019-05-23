@@ -10,7 +10,7 @@
 #define MyAppVersion "@@VERSION@@"
 #define MyAppPublisher "Caltech DLD"
 #define MyAppURL "https://github.com/caltechlibrary/holdit"
-#define MyAppExeName "holdit.exe"
+#define MyAppExeName "Hold It.exe"
 
 [Setup]
 ; .............................................................................
