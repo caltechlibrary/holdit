@@ -4,6 +4,13 @@ Change log for Hold It!
 Version 1.1.2
 -------------
 
+* Fix a bug in the Windows installer script where it used the wrong `.exe` file name
+* Make the uninstallation process use the windows "Add or remove programs" system utility instead of using the `unins000.exe` program in the _Hold It!_ folder
+
+
+Version 1.1.2
+-------------
+
 * Fix a critical bug in how Shibboleth authentication with Tind.io is handled.  It is a bit of a mystery to me how the previous code could have worked (and worked in production, no less).
 
 
