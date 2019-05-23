@@ -37,12 +37,22 @@ SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 ChangesEnvironment=true
 PrivilegesRequired=admin
+UninstallFilesDir=Uninstall\exe\{#MyAppName}
 
 
 [Languages]
 ; .............................................................................
 
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+
+[Dirs]
+; .............................................................................
+; This is part of the steps to give the uninstaller a more obvious name.
+; From https://stackoverflow.com/a/46853530/743730
+
+Name: Uninstall\exe; Attribs: hidden;
+Name: "Uninstall\exe\{#MyAppName}"; Attribs: hidden;
 
 
 [Files]
@@ -59,6 +69,7 @@ Source: "\\Mac\Home\project-files\library\repos\holdit\holdit\data\default_templ
 ; .............................................................................
 
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "Uninstall\Uninstall {#MyAppName}"; Filename: "Uninstall\exe\{#MyAppName}\unins000.exe"
 
 
 [Tasks]
