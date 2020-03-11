@@ -37,6 +37,8 @@ The developers provide an installer program for Caltech Library users.  Please c
 
 You can also build _Hold It!_ from sources.  Information about building the application can be found in the project [Wiki](https://github.com/caltechlibrary/holdit/wiki).
 
+<img width="30%" align="right" src=".graphics/tind-global-lists.png">The Important: The Tind account of the user running _Hold It!_ must have access to Tind's Global Lists feature.  This requires a Tind administrator to set the permissions on the user's Tind account.  To find out if your Tind account has access to Global Lists, log in to Tind and look in the **Administration** menu for the Global Lists item.  If it's missing, contact your Tind administrator.
+
 
 ▶︎ Basic operation
 ------------------

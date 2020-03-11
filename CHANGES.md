@@ -1,6 +1,12 @@
 Change log for Hold It!
 =======================
 
+Version 1.1.4
+-------------
+
+* In the documentation, mention the need for the Tind account to have access to Tind Global Lists
+
+
 Version 1.1.3
 -------------
 
