@@ -5,6 +5,7 @@ Version 1.1.4
 -------------
 
 * In the documentation, mention the need for the Tind account to have access to Tind Global Lists
+* Fix the Windows installer configuration script to put the version number into the installer file name.
 
 
 Version 1.1.3
