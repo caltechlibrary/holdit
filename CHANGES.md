@@ -1,7 +1,7 @@
 Change log for Hold It!
 =======================
 
-Version 1.1.2
+Version 1.1.3
 -------------
 
 * Fix a bug in the Windows installer script where it used the wrong `.exe` file name
