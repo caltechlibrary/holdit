@@ -14,6 +14,7 @@ open-source software released under a 3-clause BSD license.  Please see the
 file "LICENSE" for more information.
 '''
 
+from appdirs import user_data_dir
 import os
 from   os import path
 import shutil
@@ -72,6 +73,11 @@ def holdit_path():
         return path.abspath(path.join(module_path(), '..'))
 
 
+def datadir_path():
+    '''Returns the path to Hold It's internal data directory.'''
+    return path.join(module_path(), 'data')
+
+
 def desktop_path():
     '''Returns the path to the user's desktop directory.'''
     if sys.platform.startswith('win'):
@@ -80,9 +86,12 @@ def desktop_path():
         return path.join(path.join(path.expanduser('~')), 'Desktop')
 
 
-def datadir_path():
-    '''Returns the path to Hold It's internal data directory.'''
-    return path.join(module_path(), 'data')
+def user_data_path():
+    data_dir = user_data_dir('Hold It', 'CaltechLibrary')
+    if not path.exists(data_dir):
+        if __debug__: log('creating user data directory {}', data_dir)
+        os.mkdir(data_dir)
+    return data_dir
 
 
 def rename_existing(file):
