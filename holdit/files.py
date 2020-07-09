@@ -90,7 +90,7 @@ def user_data_path():
     data_dir = user_data_dir('Hold It', 'CaltechLibrary')
     if not path.exists(data_dir):
         if __debug__: log('creating user data directory {}', data_dir)
-        os.mkdir(data_dir)
+        os.makedirs(data_dir, exist_ok = True)
     return data_dir
 
 
