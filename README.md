@@ -124,8 +124,10 @@ The vector artwork used as part of the logo for _Hold It!_ was created by [Yo! B
 
 _Hold It!_ makes use of numerous open-source packages, without which it would have been effectively impossible to develop _Hold It!_ with the resources we had.  We want to acknowledge this debt.  In alphabetical order, the packages are:
 
+* [appdirs](https://pypi.org/project/appdirs/) &ndash; abstraction layer to determine application data/config directories on any OS
 * [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) &ndash; an HTML parsing library
 * [colorama](https://github.com/tartley/colorama) &ndash; makes ANSI escape character sequences work under MS Windows terminals
+* [cryptography](https://pypi.org/project/cryptography/) &ndash; cryptographic functions for Python
 * [docx](https://github.com/python-openxml/python-docx) &ndash; a library for creating and updating Microsoft Word (`.docx`) files
 * [docxcompose](https://github.com/4teamwork/docxcompose) &ndash; a library for concatenating/appending Microsoft Word (`.docx`) files
 * [google-api-core, google-api-python-client, google-auth, google-auth-httplib2, google-cloud, google-cloud-vision, googleapis-common-protos, google_api_python_client](https://github.com/googleapis/google-cloud-python) &ndash; Google API libraries 
