@@ -4,6 +4,7 @@ Change log for Hold It!
 Version 1.1.4
 -------------
 
+* Fix problem with storing Google access token on Windows
 * In the documentation, mention the need for the Tind account to have access to Tind Global Lists
 * Fix the Windows installer configuration script to put the version number into the installer file name.
 
