@@ -18,7 +18,6 @@ from apiclient.discovery import build
 from httplib2 import Http
 from oauth2client import client, tools
 from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.contrib.keyring_storage import Storage as token_storage
 from os import path
 import json as jsonlib
 import sys
@@ -38,6 +37,7 @@ from holdit.exceptions import *
 from holdit.records import HoldRecord
 from holdit.files import open_url, datadir_path
 from holdit.debug import log
+from holdit.token_storage import TokenStorage
 
 import logging
 logging.getLogger('googleapiclient').setLevel(logging.CRITICAL)
@@ -165,7 +165,7 @@ def records_from_google(gs_id, user, message_handler):
 
 def spreadsheet_credentials(user, message_handler):
     if __debug__: log('Getting token for Google API')
-    store = token_storage('Holdit!', user)
+    store = TokenStorage('Holdit!', user)
     creds = store.get()
     if not creds or creds.invalid:
         if __debug__: log('Using secrets file for Google API')
