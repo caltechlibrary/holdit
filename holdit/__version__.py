@@ -6,7 +6,7 @@
 # @website https://github.com/caltechlibrary/holdit
 # =============================================================================
 
-__version__     = '1.1.3'
+__version__     = '1.1.4'
 __title__       = 'holdit'
 __name__        = 'Hold It!'
 __description__ = '''A program for Caltech Library's Circulation team to easily generate a printable "on hold" item list from the Caltech TIND server.'''
@@ -14,4 +14,4 @@ __url__         = 'https://github.com/caltechlibrary/holdit'
 __author__      = 'Michael Hucka <mhucka@caltech.edu>'
 __email__       = 'mhucka@caltech.edu'
 __license__     = 'BSD 3-clause license -- see LICENSE file'
-__copyright__   = 'Copyright (C) 2018 by the California Institute of Technology'
+__copyright__   = 'Copyright (C) 2018-2020 by the California Institute of Technology'
