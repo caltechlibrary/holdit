@@ -1,6 +1,13 @@
 Change log for Hold It!
 =======================
 
+Version 1.2.0
+-------------
+
+* Remember the login name from previous runs, to save users the hassle of having to type it each time.  (However, the password must still be typed each time.)
+* Fix blurry text on Windows high DPI monitors.
+
+
 Version 1.1.4
 -------------
 
