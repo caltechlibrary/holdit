@@ -68,6 +68,9 @@ import textwrap
 from   threading import Thread
 import webbrowser
 
+if sys.platform.startswith('win'):
+    import ctypes
+
 import holdit
 from holdit.files import datadir_path, readable
 from holdit.exceptions import *
@@ -145,16 +148,26 @@ class HoldItMainFrame(wx.Frame):
     '''Defines the main application GUI frame.'''
 
     def __init__(self, *args, **kwds):
+        if sys.platform.startswith('win'):
+            self._scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
+        else:
+            self._scale_factor = 1
+
         self._cancel = False
-        self._height = 275 if sys.platform.startswith('win') else 250
-        self._width  = 450
+        if self._scale_factor > 1.5:
+            self._height = 316
+        else:
+            self._height = 320
+        self._height *= self._scale_factor
+        self._width  = 500
+        self._width  *= self._scale_factor
 
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         self.panel = wx.Panel(self)
         headline = holdit.__name__ + " — generate a list of hold requests"
         self.headline = wx.StaticText(self.panel, wx.ID_ANY, headline, style = wx.ALIGN_CENTER)
-        self.headline.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC,
+        self.headline.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC,
                                       wx.FONTWEIGHT_BOLD, 0, "Arial"))
 
         # For macos, I figured out how to make the background color of the text
@@ -162,12 +175,20 @@ class HoldItMainFrame(wx.Frame):
         # our purposes (IMHO) than the default (which would be white), but then
         # we need a divider to separate the headline from the text area.
         if not sys.platform.startswith('win'):
-            self.divider = wx.StaticLine(self.panel, wx.ID_ANY)
-            self.divider.SetMinSize((self._width, 2))
+            self.divider1 = wx.StaticLine(self.panel, wx.ID_ANY)
+            self.divider1.SetMinSize((self._width, 2))
 
+        text_area_size = (self._width, 200 * self._scale_factor)
         self.text_area = wx.richtext.RichTextCtrl(self.panel, wx.ID_ANY,
-                                                  size = (self._width, 200),
+                                                  size = text_area_size,
                                                   style = wx.TE_MULTILINE | wx.TE_READONLY)
+
+        # Quit button on the bottom.
+        # if not sys.platform.startswith('win'):
+        self.divider2 = wx.StaticLine(self.panel, wx.ID_ANY)
+        self.quit_button = wx.Button(self.panel, label = "Quit")
+        self.quit_button.Bind(wx.EVT_KEY_DOWN, self.on_cancel_or_quit)
+
         # On macos, the color of the text background is set to the same as the
         # rest of the UI panel.  I haven't figured out how to do it on Windows.
         if not sys.platform.startswith('win'):
@@ -205,6 +226,7 @@ class HoldItMainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_help, id = self.helpItem.GetId())
         self.Bind(wx.EVT_MENU, self.on_about, id = self.aboutItem.GetId())
         self.Bind(wx.EVT_CLOSE, self.on_cancel_or_quit)
+        self.Bind(wx.EVT_BUTTON, self.on_cancel_or_quit, self.quit_button)
 
         close_id = wx.NewId()
         self.Bind(wx.EVT_MENU, self.on_cancel_or_quit, id = close_id)
@@ -215,14 +237,19 @@ class HoldItMainFrame(wx.Frame):
         self.SetSize((self._width, self._height))
         self.SetTitle(holdit.__name__)
         self.outermost_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.AddSpacer(5)
         self.outermost_sizer.Add(self.headline, 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
         if not sys.platform.startswith('win'):
-            self.outermost_sizer.Add(self.divider, 0, wx.EXPAND, 0)
-            self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+            self.outermost_sizer.AddSpacer(5)
+            self.outermost_sizer.Add(self.divider1, 0, wx.EXPAND, 0)
+            self.outermost_sizer.AddSpacer(5)
         self.outermost_sizer.Add(self.text_area, 0, wx.EXPAND, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.AddSpacer(5)
+        self.outermost_sizer.Add(self.divider2, 0, wx.EXPAND, 0)
+        self.outermost_sizer.AddSpacer(5 * self._scale_factor)
+        self.outermost_sizer.Add(self.quit_button, 0, wx.BOTTOM | wx.CENTER, 0)
+        if not sys.platform.startswith('win'):
+            self.outermost_sizer.AddSpacer(5)
         self.SetSizer(self.outermost_sizer)
         self.Layout()
         self.Centre()
@@ -233,14 +260,14 @@ class HoldItMainFrame(wx.Frame):
 
 
     def on_cancel_or_quit(self, event):
-        if __debug__: log('HoldItControlGUI got Exit/Cancel')
+        if __debug__: log('got Exit/Cancel')
         self._cancel = True
         self.Destroy()
         return True
 
 
     def on_escape(self, event):
-        if __debug__: log('HoldItControlGUI got Escape')
+        if __debug__: log('got Escape')
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
             self.on_cancel_or_quit(event)
@@ -250,7 +277,7 @@ class HoldItMainFrame(wx.Frame):
 
 
     def on_about(self, event):
-        if __debug__: log('HoldItControlGUI opening About window')
+        if __debug__: log('opening About window')
         dlg = wx.adv.AboutDialogInfo()
         dlg.SetName(holdit.__name__)
         dlg.SetVersion(holdit.__version__)
@@ -263,7 +290,7 @@ class HoldItMainFrame(wx.Frame):
 
 
     def on_help(self, event):
-        if __debug__: log('HoldItControlGUI opening Help window')
+        if __debug__: log('opening Help window')
         wx.BeginBusyCursor()
         help_file = path.join(datadir_path(), "help.html")
         if readable(help_file):
@@ -273,11 +300,13 @@ class HoldItMainFrame(wx.Frame):
 
 
     def progress_message(self, message):
+        self.text_area.SetInsertionPointEnd()
         self.text_area.AppendText(message + ' ...\n')
+        self.text_area.ShowPosition(self.text_area.GetLastPosition())
 
 
     def login_dialog(self, results, user, password):
-        if __debug__: log('HoldItControlGUI creating and showing login dialog')
+        if __debug__: log('creating and showing login dialog')
         dialog = LoginDialog(self)
         dialog.initialize_values(results, user, password)
         dialog.ShowWindowModal()
@@ -288,6 +317,11 @@ class LoginDialog(wx.Dialog):
 
     def __init__(self, *args, **kwargs):
         super(LoginDialog, self).__init__(*args, **kwargs)
+        if sys.platform.startswith('win'):
+            self._scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
+        else:
+            self._scale_factor = 1
+
         self._user = None
         self._password = None
         self._cancel = False
@@ -295,12 +329,15 @@ class LoginDialog(wx.Dialog):
 
         panel = wx.Panel(self)
         if sys.platform.startswith('win'):
-            self.SetSize((330, 175))
+            self.SetSize((360 * self._scale_factor, 160 * self._scale_factor))
         else:
             self.SetSize((330, 155))
         self.explanation = wx.StaticText(panel, wx.ID_ANY,
-                                         'Hold It! needs your Caltech Access credentials',
+                                         'Caltech Access credentials (to access TIND)',
                                          style = wx.ALIGN_CENTER)
+        if sys.platform.startswith('win'):
+            self.explanation.SetFont(wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC,
+                                             wx.FONTWEIGHT_NORMAL, 0, "Arial"))
         self.top_line = wx.StaticLine(panel, wx.ID_ANY)
         self.login_label = wx.StaticText(panel, wx.ID_ANY, "Caltech login: ", style = wx.ALIGN_RIGHT)
         self.login = wx.TextCtrl(panel, wx.ID_ANY, '', style = wx.TE_PROCESS_ENTER)
@@ -337,9 +374,9 @@ class LoginDialog(wx.Dialog):
     def __set_properties(self):
         self.SetTitle(holdit.__name__)
         self.login_label.SetToolTip("The account name to use to log in to caltech.tind.io. This should be a Caltech access login name.")
-        self.login.SetMinSize((195, 22))
+        self.login.SetMinSize((195 * self._scale_factor, 22 * self._scale_factor))
         self.password_label.SetToolTip("The account password to use to log in to caltech.tind.io. This should be a Caltech access password.")
-        self.password.SetMinSize((195, 22))
+        self.password.SetMinSize((195 * self._scale_factor, 22 * self._scale_factor))
         self.ok_button.SetFocus()
 
 
@@ -347,26 +384,29 @@ class LoginDialog(wx.Dialog):
         self.outermost_sizer = wx.BoxSizer(wx.VERTICAL)
         self.button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.login_sizer = wx.FlexGridSizer(2, 2, 5, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360 * self._scale_factor, 5 * self._scale_factor), 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add(self.explanation, 0, wx.ALIGN_CENTER, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360 * self._scale_factor, 5 * self._scale_factor), 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add(self.top_line, 0, wx.EXPAND, 0)
-        self.outermost_sizer.Add((360, 8), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360 * self._scale_factor, 8 * self._scale_factor), 0, wx.ALIGN_CENTER, 0)
         self.login_sizer.Add(self.login_label, 0, wx.ALIGN_RIGHT, 0)
         self.login_sizer.Add(self.login, 0, wx.EXPAND, 0)
         self.login_sizer.Add(self.password_label, 0, wx.ALIGN_RIGHT, 0)
         self.login_sizer.Add(self.password, 0, wx.EXPAND, 0)
         self.outermost_sizer.Add(self.login_sizer, 1, wx.ALIGN_CENTER | wx.FIXED_MINSIZE, 5)
-        self.outermost_sizer.Add((360, 5), 0, 0, 0)
+        if sys.platform.startswith('win'):
+            self.outermost_sizer.Add((360, 10 * self._scale_factor), 0, 0, 0)
+        else:
+            self.outermost_sizer.Add((360, 5), 0, 0, 0)
         self.outermost_sizer.Add(self.bottom_line, 0, wx.EXPAND, 0)
-        self.outermost_sizer.Add((360, 5), 0, 0, 0)
+        self.outermost_sizer.Add((360 * self._scale_factor, 5), 0, 0, 0)
         self.button_sizer.Add((0, 0), 0, 0, 0)
         self.button_sizer.Add(self.cancel_button, 0, wx.ALIGN_CENTER, 0)
         self.button_sizer.Add((10, 20), 0, 0, 0)
         self.button_sizer.Add(self.ok_button, 0, wx.ALIGN_CENTER, 0)
         self.button_sizer.Add((10, 20), 0, wx.ALIGN_CENTER, 0)
         self.outermost_sizer.Add(self.button_sizer, 1, wx.ALIGN_RIGHT, 0)
-        self.outermost_sizer.Add((360, 5), 0, wx.ALIGN_CENTER, 0)
+        self.outermost_sizer.Add((360 * self._scale_factor, 5), 0, wx.ALIGN_CENTER, 0)
         self.SetSizer(self.outermost_sizer)
         self.Layout()
         self.Centre()
@@ -411,7 +451,7 @@ class LoginDialog(wx.Dialog):
     def on_ok(self, event):
         '''Stores the current values and destroys the dialog.'''
 
-        if __debug__: log('LoginDialog got OK')
+        if __debug__: log('got OK')
         if self.inputs_nonempty():
             self._cancel = False
             self._user = self.login.GetValue()
@@ -421,12 +461,12 @@ class LoginDialog(wx.Dialog):
             self.return_values()
             self.EndModal(event.EventObject.Id)
         else:
-            if __debug__: log('LoginDialog has incomplete inputs')
+            if __debug__: log('has incomplete inputs')
             self.complain_incomplete_values(event)
 
 
     def on_cancel_or_quit(self, event):
-        if __debug__: log('LoginDialog got Cancel')
+        if __debug__: log('got Cancel')
         self._cancel = True
         self.return_values()
         # self.Destroy()
@@ -444,7 +484,7 @@ class LoginDialog(wx.Dialog):
     def on_escape(self, event):
         keycode = event.GetKeyCode()
         if keycode == wx.WXK_ESCAPE:
-            if __debug__: log('LoginDialog got Escape')
+            if __debug__: log('got Escape')
             self.on_cancel_or_quit(event)
         else:
             event.Skip()
