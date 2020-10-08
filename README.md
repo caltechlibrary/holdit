@@ -10,6 +10,7 @@ _Hold It!_ is an application written for the Caltech Library's Circulation team 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=flat-square)](https://choosealicense.com/licenses/bsd-3-clause)
 [![Python](https://img.shields.io/badge/Python-3.4+-brightgreen.svg?style=flat-square)](http://shields.io)
 [![Latest release](https://img.shields.io/badge/Latest_release-1.1.4-b44e88.svg?style=flat-square)](http://shields.io)
+[![DOI](https://img.shields.io/badge/dynamic/json.svg?label=DOI&style=flat-square&colorA=gray&colorB=navy&query=$.metadata.doi&uri=https://data.caltech.edu/api/record/1641)](https://data.caltech.edu/records/1641)
 
 Table of Contents
 -----------------
