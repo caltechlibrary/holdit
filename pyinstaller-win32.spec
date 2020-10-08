@@ -9,7 +9,7 @@
 
 import imp
 import os
-import platform
+from   PyInstaller.utils.hooks import copy_metadata
 import sys
 
 # The list must contain tuples: ('file', 'destination directory').
@@ -17,6 +17,12 @@ data_files = [ ('holdit\holdit.ini', 'holdit'),
                ('holdit\data\client_secrets.json', 'holdit\data'),
                ('holdit\data\default_template.docx', 'holdit\data'),
                ('holdit\data\help.html', 'holdit\data') ]
+
+# A breaking change in google-api-python-client caused the need for this.
+# See https://github.com/googleapis/google-api-python-client/issues/876
+# This solution came from user Jay Lee in a comment on the issue at
+# https://github.com/googleapis/google-api-python-client/issues/876#issuecomment-625779315
+data_files += copy_metadata('google-api-python-client')
 
 configuration = Analysis([r'holdit\__main__.py'],
                          pathex = ['.'],
